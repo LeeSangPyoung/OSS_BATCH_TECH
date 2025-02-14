@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.2</version> <!-- 최신 2.7.x 버전 -->
+    </parent>
+    
+    <groupId>nexcore.scheduler</groupId>
+    <artifactId>nexcore-scheduler-common</artifactId>
+    <version>1.0.0</version>
+    <name>nexcore-scheduler.common_spring2</name>
+    <description>Demo project for Spring Boot</description>
+    <url/>
+     
+    <properties>
+        <java.version>17</java.version> <!-- Java 17 지원 가능 -->
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
+       <!-- Log4j 1.x 추가 -->
+	    <dependency>
+	        <groupId>log4j</groupId>
+	        <artifactId>log4j</artifactId>
+	        <version>1.2.17</version>  <!-- Log4j 1.x 버전 -->
+	    </dependency>
+	
+	    <!-- Log4j에서 SLF4J 사용 -->
+
+	    
+	    <dependency>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-lang3</artifactId>
+		    <version>3.13.0</version>  <!-- 최신 버전 -->
+		</dependency>
+		
+		<dependency>
+		    <groupId>commons-codec</groupId>
+		    <artifactId>commons-codec</artifactId>
+		    <version>1.16.0</version>  <!-- 최신 버전 -->
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.apache.poi</groupId>
+		    <artifactId>poi</artifactId>
+		    <version>5.2.3</version>  <!-- 최신 버전 -->
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.apache.poi</groupId>
+		    <artifactId>poi-ooxml</artifactId>
+		    <version>5.2.3</version>  <!-- 최신 버전 -->
+		</dependency>
+		
+
+		
+		<dependency>
+		    <groupId>nexcore.framework</groupId>
+		    <artifactId>nexcore-framework-supports</artifactId>
+		    <version>1.0.0</version>
+		    <scope>system</scope>
+		    <systemPath>D:/workspace_batch/nexcore.scheduler.common/lib/nexcore-framework-supports-7.0.0.jar</systemPath>
+		</dependency>
+
+
+    </dependencies>
+
+    <build>
+        <plugins>
+        </plugins>
+    </build>
+</project>
