@@ -18,7 +18,9 @@ import nexcore.scheduler.log.LogManager;
 import nexcore.scheduler.msg.MSG;
 import nexcore.scheduler.util.SchedulerUtil;
 import nexcore.scheduler.util.Util;
-
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 /**
  * <ul>
  * <li>업무 그룹명 : 금융 프레임워크 </li>
@@ -30,6 +32,8 @@ import nexcore.scheduler.util.Util;
  * </ul>
  */
 public class JobStarter implements IMonitorDisplayable {
+    @Autowired
+    private SqlSessionFactory sqlSessionFactory;  // ✅ Spring에서 주입
 	private JobInstanceManager           jobInstanceManager;
 	private ControllerMain               controllerMain;
 	private boolean                      queueClosed;                 // 가동중인가?
@@ -115,50 +119,100 @@ public class JobStarter implements IMonitorDisplayable {
 						 */
 
 						boolean jobStateUpdateOkFlag = false;
+//						try {
+//							int pgMax = 0;
+//							if (!Util.isBlank(jobins.getParallelGroup())) { 
+//								controllerMain.getSqlMapClient().startTransaction(); // 병렬제한그룹이 존재할 경우 트랜잭션을 건다.
+//								pgMax = parallelRunningCounter.getParallelGroupMaxWithLock(jobins.getParallelGroup());
+//							}
+//							
+//							jobStateUpdateOkFlag = jobInstanceManager.setJobStateForStart(jobins.getJobInstanceId(), System.currentTimeMillis(), "Before job execution", jobins.getJobState(), jobins.getParallelGroup(), pgMax, jobins.getLastModifyTime());
+//						} catch (Throwable e) {
+//							Util.logError(log, MSG.get("main.jobstarter.decisionqueue.error", jobinsId)+"-1", e); // {0}의 기동 판단 중 에러가 발생하였습니다
+//						}finally {
+//							if (!Util.isBlank(jobins.getParallelGroup())) {
+//								try {
+//									controllerMain.getSqlMapClient().commitTransaction(); // commit
+//								}catch(Exception e) {
+//									Util.logError(log, "[DecisionQueueThread] commitTransaction() error", e);
+//								}
+//								try {
+//									controllerMain.getSqlMapClient().endTransaction();    // 병렬제한그룹이 존재할 경우 트랜잭션을 걸었던 것을 종료한다.
+//								}catch(Exception e) {
+//									Util.logError(log, "[DecisionQueueThread] endTransaction() error", e);
+//								}
+//							}
+//							
+//							if (jobStateUpdateOkFlag) {
+//								// runQueue로 넣어서 실행 대기 상태로 바꾼다.
+//								runQueueCache.put(jobins.getJobInstanceId(), jobins);
+//								runQueue.put(jobins);
+//							}else {
+//								// 여기서 doCheck()를 만족시킨 직후에 , forceRun을 누군가 하면..이와 같은 문제가 발생할 수 있다.
+//								// 이중화 환경에서 doCheck() 만족후에 다는 노드에서 먼저 setJobStateForStart() 를 호출하면 이렇게 될 수 있다.
+//								// 에러가 아니고 정상적인 상황임. 
+//								String newJobState = jobInstanceManager.getJobState(jobins.getJobInstanceId());
+//								if (JobInstance.JOB_STATE_RUNNING.equals(newJobState)) {
+//									// peer 에서 먼저 Running 시킨 경우이다. 정상적인 상황이다.
+//									Util.logInfo(log, "[DecisionQueueThread] ("+jobins.getJobInstanceId()+") started at peer.");
+//								}else {
+//									// 이 경우는 병렬제한그룹 때문에 wait 해야하는 상황일 수 있다.
+//									// 만일 병렬제한 그룹때문에 R 상태 변경이 실패한 것이라면, 
+//									// parallelJobWaitingPool 에도 등록해주어야 한다. 아래 checkParallelMax 안에서 이 일이 일어난다. 2012-12-13 
+//									jobRunConditionChecker.checkParallelMax(jobins);
+//								}
+//							}
+//						}
 						try {
-							int pgMax = 0;
-							if (!Util.isBlank(jobins.getParallelGroup())) { 
-								controllerMain.getSqlMapClient().startTransaction(); // 병렬제한그룹이 존재할 경우 트랜잭션을 건다.
-								pgMax = parallelRunningCounter.getParallelGroupMaxWithLock(jobins.getParallelGroup());
-							}
-							
-							jobStateUpdateOkFlag = jobInstanceManager.setJobStateForStart(jobins.getJobInstanceId(), System.currentTimeMillis(), "Before job execution", jobins.getJobState(), jobins.getParallelGroup(), pgMax, jobins.getLastModifyTime());
+						    int pgMax = 0;
+						    if (!Util.isBlank(jobins.getParallelGroup())) { 
+						        try (SqlSession session = sqlSessionFactory.openSession()) {  // MyBatis에서 세션을 열고 관리
+						            session.commit();  // 병렬제한그룹이 존재할 경우 트랜잭션을 건다.
+						            pgMax = parallelRunningCounter.getParallelGroupMaxWithLock(jobins.getParallelGroup());
+						        } catch (Exception e) {
+						            Util.logError(log, "[DecisionQueueThread] SqlSession error", e);
+						        }
+						    }
+						    
+						    jobStateUpdateOkFlag = jobInstanceManager.setJobStateForStart(jobins.getJobInstanceId(), System.currentTimeMillis(), "Before job execution", jobins.getJobState(), jobins.getParallelGroup(), pgMax, jobins.getLastModifyTime());
 						} catch (Throwable e) {
-							Util.logError(log, MSG.get("main.jobstarter.decisionqueue.error", jobinsId)+"-1", e); // {0}의 기동 판단 중 에러가 발생하였습니다
-						}finally {
-							if (!Util.isBlank(jobins.getParallelGroup())) {
-								try {
-									controllerMain.getSqlMapClient().commitTransaction(); // commit
-								}catch(Exception e) {
-									Util.logError(log, "[DecisionQueueThread] commitTransaction() error", e);
-								}
-								try {
-									controllerMain.getSqlMapClient().endTransaction();    // 병렬제한그룹이 존재할 경우 트랜잭션을 걸었던 것을 종료한다.
-								}catch(Exception e) {
-									Util.logError(log, "[DecisionQueueThread] endTransaction() error", e);
-								}
-							}
-							
-							if (jobStateUpdateOkFlag) {
-								// runQueue로 넣어서 실행 대기 상태로 바꾼다.
-								runQueueCache.put(jobins.getJobInstanceId(), jobins);
-								runQueue.put(jobins);
-							}else {
-								// 여기서 doCheck()를 만족시킨 직후에 , forceRun을 누군가 하면..이와 같은 문제가 발생할 수 있다.
-								// 이중화 환경에서 doCheck() 만족후에 다는 노드에서 먼저 setJobStateForStart() 를 호출하면 이렇게 될 수 있다.
-								// 에러가 아니고 정상적인 상황임. 
-								String newJobState = jobInstanceManager.getJobState(jobins.getJobInstanceId());
-								if (JobInstance.JOB_STATE_RUNNING.equals(newJobState)) {
-									// peer 에서 먼저 Running 시킨 경우이다. 정상적인 상황이다.
-									Util.logInfo(log, "[DecisionQueueThread] ("+jobins.getJobInstanceId()+") started at peer.");
-								}else {
-									// 이 경우는 병렬제한그룹 때문에 wait 해야하는 상황일 수 있다.
-									// 만일 병렬제한 그룹때문에 R 상태 변경이 실패한 것이라면, 
-									// parallelJobWaitingPool 에도 등록해주어야 한다. 아래 checkParallelMax 안에서 이 일이 일어난다. 2012-12-13 
-									jobRunConditionChecker.checkParallelMax(jobins);
-								}
-							}
+						    Util.logError(log, MSG.get("main.jobstarter.decisionqueue.error", jobinsId)+"-1", e);  // {0}의 기동 판단 중 에러가 발생하였습니다
+						} finally {
+						    if (!Util.isBlank(jobins.getParallelGroup())) {
+						        try (SqlSession session = sqlSessionFactory.openSession()) {
+						            session.commit(); // commit
+						        } catch (Exception e) {
+						            Util.logError(log, "[DecisionQueueThread] commitTransaction() error", e);
+						        }
+
+						        try (SqlSession session = sqlSessionFactory.openSession()) {
+						            session.close();  // 병렬제한그룹이 존재할 경우 트랜잭션을 걸었던 것을 종료한다.
+						        } catch (Exception e) {
+						            Util.logError(log, "[DecisionQueueThread] endTransaction() error", e);
+						        }
+						    }
+
+						    if (jobStateUpdateOkFlag) {
+						        // runQueue로 넣어서 실행 대기 상태로 바꾼다.
+						        runQueueCache.put(jobins.getJobInstanceId(), jobins);
+						        runQueue.put(jobins);
+						    } else {
+						        // 여기서 doCheck()를 만족시킨 직후에 , forceRun을 누군가 하면..이와 같은 문제가 발생할 수 있다.
+						        // 이중화 환경에서 doCheck() 만족후에 다는 노드에서 먼저 setJobStateForStart() 를 호출하면 이렇게 될 수 있다.
+						        // 에러가 아니고 정상적인 상황임. 
+						        String newJobState = jobInstanceManager.getJobState(jobins.getJobInstanceId());
+						        if (JobInstance.JOB_STATE_RUNNING.equals(newJobState)) {
+						            // peer 에서 먼저 Running 시킨 경우이다. 정상적인 상황이다.
+						            Util.logInfo(log, "[DecisionQueueThread] ("+jobins.getJobInstanceId()+") started at peer.");
+						        } else {
+						            // 이 경우는 병렬제한그룹 때문에 wait 해야하는 상황일 수 있다.
+						            // 만일 병렬제한 그룹때문에 R 상태 변경이 실패한 것이라면, 
+						            // parallelJobWaitingPool 에도 등록해주어야 한다. 아래 checkParallelMax 안에서 이 일이 일어난다. 2012-12-13 
+						            jobRunConditionChecker.checkParallelMax(jobins);
+						        }
+						    }
 						}
+
 					}
 				} catch (Throwable e) {
 					Util.logError(log, MSG.get("main.jobstarter.decisionqueue.error", jobinsId)+"-2", e); // {0}의 기동 판단 중 에러가 발생하였습니다

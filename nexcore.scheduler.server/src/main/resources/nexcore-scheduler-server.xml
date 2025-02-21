@@ -17,12 +17,12 @@
 
     <bean id="nbs.scheduler.DataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
         <description><![CDATA[Scheduler main DataSource]]></description>
-        <property name="driverClassName"   value="${scheduler.jdbc.driver.${NEXCORE_ID}}"/>
-        <property name="url"               value="${scheduler.jdbc.url.${NEXCORE_ID}}"/>
-        <property name="username"          value="${scheduler.jdbc.username.${NEXCORE_ID}}"/>
+        <property name="driverClassName"   value="org.postgresql.Driver"/>
+        <property name="url"               value="jdbc:postgresql://localhost:5432/nexcore"/>
+        <property name="username"          value="nexcore"/>
         <property name="password">
             <bean class="nexcore.scheduler.util.PasswordPropertyGetter">
-                <property name="password" value="${scheduler.jdbc.password.${NEXCORE_ID}}"/>
+                <property name="password" value="password"/>
             </bean>
         </property>
         <property name="initialSize"       value="2"/>

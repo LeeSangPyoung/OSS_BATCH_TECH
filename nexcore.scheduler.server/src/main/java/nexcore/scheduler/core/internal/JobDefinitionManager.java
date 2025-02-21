@@ -10,6 +10,7 @@ import java.util.Map;
 // import com.ibatis.sqlmap.client.SqlMapClient;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import nexcore.scheduler.entity.JobDefinition;
 import nexcore.scheduler.entity.PostJobTrigger;
@@ -28,6 +29,8 @@ import nexcore.scheduler.util.Util;
  * </ul>
  */
 public class JobDefinitionManager {
+    @Autowired
+    private SqlSessionFactory sqlSessionFactory;  // ✅ Spring에서 주입
 	private SqlSession   sqlSession;
 	
 	public void init() {
@@ -36,13 +39,11 @@ public class JobDefinitionManager {
 	public void destroy() {
 	}
 
-	public SqlSession getSqlMapClient() {
-		return sqlSession;
-	}
-
-	public void setSqlMapClient(SqlSession sqlSession) {
-		this.sqlSession = sqlSession;
-	}
+	
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.sqlSession = sqlSessionFactory.openSession(); // ✅ setter에서 세션 초기화
+    }
 
 	/**
 	 * NBS_JOB_DEF 테이블에서 하나 읽음. PARAMETER, PRE_JOB CONDITION 은 읽지 않음.
@@ -210,39 +211,82 @@ public class JobDefinitionManager {
 	 * @param paramsList
 	 * @return
 	 */
-	public List<JobDefinition> assembleJobDefinition(List<JobDefinition> jobdefList, List<Map> preJobsList, List<Map> triggersList, List<Map> paramsList) {
-		// JobDefinition map 구성
-		Map<String, JobDefinition> jobDefMap = new LinkedHashMap<String, JobDefinition>();
-		for (JobDefinition jobdef : jobdefList) {
-			jobDefMap.put(jobdef.getJobId(), jobdef);
-		}
-		
-		// Prejob 구성 
-		for (Map<String, String> preJob : preJobsList) {
-			JobDefinition jobdef = jobDefMap.get(preJob.get("JOB_ID"));
-			if (jobdef != null) {
-				jobdef.getPreJobConditions().add(new PreJobCondition(preJob));
-			}
-		}
-		
-		// Trigger 구성 
-		for (Map<String, String> trigger : triggersList) {
-			JobDefinition jobdef = jobDefMap.get(trigger.get("JOB_ID"));
-			if (jobdef != null) {
-				jobdef.getTriggerList().add(new PostJobTrigger(trigger));
-			}
+	
+//	public List<JobDefinition> assembleJobDefinition(List<JobDefinition> jobdefList, List<Map> preJobsList, List<Map> triggersList, List<Map> paramsList) {
+//		// JobDefinition map 구성
+//		Map<String, JobDefinition> jobDefMap = new LinkedHashMap<String, JobDefinition>();
+//		for (JobDefinition jobdef : jobdefList) {
+//			jobDefMap.put(jobdef.getJobId(), jobdef);
+//		}
+//		
+//		// Prejob 구성 
+//		for (Map<String, String> preJob : preJobsList) {
+//			JobDefinition jobdef = jobDefMap.get(preJob.get("JOB_ID"));
+//			if (jobdef != null) {
+//				jobdef.getPreJobConditions().add(new PreJobCondition(preJob));
+//			}
+//		}
+//		
+//		// Trigger 구성 
+//		for (Map<String, String> trigger : triggersList) {
+//			JobDefinition jobdef = jobDefMap.get(trigger.get("JOB_ID"));
+//			if (jobdef != null) {
+//				jobdef.getTriggerList().add(new PostJobTrigger(trigger));
+//			}
+//		}
+//
+//		// 파라미터 구성
+//		for (Map<String, String> param : paramsList) {
+//			JobDefinition jobdef = jobDefMap.get(param.get("JOB_ID"));
+//			if (jobdef != null) {
+//				jobdef.getInParameters().put(param.get("PARAM_NAME"), param.get("PARAM_VALUE"));
+//			}
+//		}
+//		
+//		return new ArrayList<JobDefinition>(jobDefMap.values());
+//	}
+	public List<JobDefinition> assembleJobDefinition(
+		    List<JobDefinition> jobdefList, 
+		    List<Map<String, Object>> preJobsList, 
+		    List<Map<String, Object>> triggersList, 
+		    List<Map<String, Object>> paramsList
+		) {
+		    // JobDefinition map 구성
+		    Map<String, JobDefinition> jobDefMap = new LinkedHashMap<>();
+		    for (JobDefinition jobdef : jobdefList) {
+		        jobDefMap.put(jobdef.getJobId(), jobdef);
+		    }
+
+		    // Prejob 구성
+		    for (Map<String, Object> preJob : preJobsList) {
+		        JobDefinition jobdef = jobDefMap.get((String) preJob.get("JOB_ID"));
+		        if (jobdef != null) {
+		            jobdef.getPreJobConditions().add(new PreJobCondition((Map<String, String>) (Map<?, ?>) preJob));
+		        }
+		    }
+
+		    // Trigger 구성
+		    for (Map<String, Object> trigger : triggersList) {
+		        JobDefinition jobdef = jobDefMap.get((String) trigger.get("JOB_ID"));
+		        if (jobdef != null) {
+		            jobdef.getTriggerList().add(new PostJobTrigger((Map<String, String>) (Map<?, ?>) trigger));
+		        }
+		    }
+
+		    // 파라미터 구성
+		    for (Map<String, Object> param : paramsList) {
+		        JobDefinition jobdef = jobDefMap.get((String) param.get("JOB_ID"));
+		        if (jobdef != null) {
+		            jobdef.getInParameters().put(
+		                (String) param.get("PARAM_NAME"), 
+		                (String) param.get("PARAM_VALUE")
+		            );
+		        }
+		    }
+
+		    return new ArrayList<>(jobDefMap.values());
 		}
 
-		// 파라미터 구성
-		for (Map<String, String> param : paramsList) {
-			JobDefinition jobdef = jobDefMap.get(param.get("JOB_ID"));
-			if (jobdef != null) {
-				jobdef.getInParameters().put(param.get("PARAM_NAME"), param.get("PARAM_VALUE"));
-			}
-		}
-		
-		return new ArrayList<JobDefinition>(jobDefMap.values());
-	}
 
 	
 	/**
@@ -313,16 +357,25 @@ public class JobDefinitionManager {
 	 * @param jobIdList
 	 * @return
 	 */
+//	public List<JobDefinition> getJobDefinitionsByJobIdList(List<String> jobIdList) throws SQLException {
+//		if (jobIdList == null || jobIdList.size() == 0) {
+//			return new ArrayList<JobDefinition>();
+//		}else {
+//			Map in = new HashMap();
+//			in.put("jobIdList", jobIdList);
+//			List<JobDefinition> jobdefList = (List<JobDefinition>)sqlMapClient.queryForList("nbs.scheduler.selectJobDefinitionsByJobIdList", in);
+//			return jobdefList;
+//		}
+//	}
 	public List<JobDefinition> getJobDefinitionsByJobIdList(List<String> jobIdList) throws SQLException {
-		if (jobIdList == null || jobIdList.size() == 0) {
-			return new ArrayList<JobDefinition>();
-		}else {
-			Map in = new HashMap();
-			in.put("jobIdList", jobIdList);
-			List<JobDefinition> jobdefList = (List<JobDefinition>)sqlMapClient.queryForList("nbs.scheduler.selectJobDefinitionsByJobIdList", in);
-			return jobdefList;
-		}
-	}
+        if (jobIdList == null || jobIdList.isEmpty()) {
+            return List.of();
+        } else {
+            Map<String, Object> in = new HashMap<>();
+            in.put("jobIdList", jobIdList);
+            return sqlSession.selectList("nbs.scheduler.selectJobDefinitionsByJobIdList", in);
+        }
+    }
 
 	/**
 	 * admin 에서 JobDefiniton 정보를 검색할때 사용함. (deep)

@@ -1,5 +1,6 @@
 package nexcore.scheduler;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,8 +12,9 @@ import jakarta.annotation.PostConstruct;
 import nexcore.scheduler.ioc.BeanRegistry;
 
 @SpringBootApplication
-@PropertySource("classpath:nexcore-scheduler-server.properties")  // 프로퍼티 파일 로드
 @ComponentScan(basePackages = {"nexcore.scheduler"})
+@MapperScan("nbs.monitor")
+@PropertySource("classpath:nexcore-scheduler-server.properties")  // 프로퍼티 파일 로드
 public class NexcoreSchedulerApplication {
     public static void main(String[] args) {
         System.out.println("🔹 Nexcore Scheduler Application Starting...");

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.ibatis.session.ResultHandler;
+
 import nexcore.scheduler.entity.AdminAuth;
 import nexcore.scheduler.entity.AgentInfo;
 import nexcore.scheduler.entity.AgentMonitoringSummary;
@@ -200,9 +202,16 @@ public class ControllerAdmin00 {
 	 * @param queryParamMap
 	 * @param rowHandler
 	 */
+//	public void getJobInstanceListWithRowHandler(Map queryParamMap, Object rowHandler) {
+//		controllerService.getJobInstanceListWithRowHandler(queryParamMap, rowHandler);
+//	}
 	public void getJobInstanceListWithRowHandler(Map queryParamMap, Object rowHandler) {
-		controllerService.getJobInstanceListWithRowHandler(queryParamMap, rowHandler);
+	    controllerService.getJobInstanceListWithRowHandler(
+	        (Map<String, Object>) queryParamMap,
+	        (ResultHandler<JobInstance>) rowHandler
+	    );
 	}
+	
 
 	/**
 	 * 필요한 컬럼만 조회한다.
@@ -211,10 +220,15 @@ public class ControllerAdmin00 {
 	 * @param queryParamMap
 	 * @param rowHandler
 	 */
+//	public void getJobInstanceListFreeColumnWithRowHandler(Map queryParamMap, Object rowHandler) {
+//		controllerService.getJobInstanceListFreeColumnWithRowHandler(queryParamMap, rowHandler);
+//	}
 	public void getJobInstanceListFreeColumnWithRowHandler(Map queryParamMap, Object rowHandler) {
-		controllerService.getJobInstanceListFreeColumnWithRowHandler(queryParamMap, rowHandler);
+	    controllerService.getJobInstanceListFreeColumnWithRowHandler(
+	        (Map<String, Object>) queryParamMap,
+	        (ResultHandler<JobInstance>) rowHandler
+	    );
 	}
-
 	/**
 	 * 필요한 컬럼만 조회한다. ($columnList$ 에 컬럼 목록 담는다)
 	 * $queryCondition$ 방식이 아닌 ibatis dynamic 태그를 이용한 쿼리. 
@@ -741,10 +755,12 @@ public class ControllerAdmin00 {
 	}
 
 	
+//	public void getJobDefinitionStgListWithRH(String queryCondition, Object rowHandler) throws SQLException {
+//		controllerService.getJobDefinitionStgListWithRH(queryCondition, rowHandler);
+//	}
 	public void getJobDefinitionStgListWithRH(String queryCondition, Object rowHandler) throws SQLException {
-		controllerService.getJobDefinitionStgListWithRH(queryCondition, rowHandler);
+	    controllerService.getJobDefinitionStgListWithRH(queryCondition, (ResultHandler<JobDefinitionStg>) rowHandler);
 	}
-
 	/**
 	 * JobDefinition 변경/신규/삭제 요청 승인
 	 */

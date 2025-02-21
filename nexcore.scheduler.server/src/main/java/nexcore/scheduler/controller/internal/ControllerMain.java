@@ -15,6 +15,7 @@ import java.util.Properties;
 import org.apache.commons.logging.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.apache.ibatis.session.ResultHandler;
 
 //import com.ibatis.sqlmap.client.SqlMapClient;
 
@@ -105,9 +106,8 @@ public class ControllerMain {
 	private JobInstanceIdMap          jobInstanceIdMap;
 	private RepeatManager             repeatManager;
 	private IPeerClient               peerClient;
-	@Autowired
 	private SqlSession              sqlSession;
-    @Autowired
+	@Autowired
     private SqlSessionFactory sqlSessionFactory;  // ✅ Spring에서 주입
 	
 	private Log                       log;
@@ -119,7 +119,18 @@ public class ControllerMain {
 
         log = LogManager.getSchedulerLog();
         Connection conn = null;
+        
+        
+        
+        
 
+        if (sqlSessionFactory == null) {
+            logger.error("❌ sqlSessionFactory is NULL!");
+            throw new RuntimeException("sqlSessionFactory is NULL");
+        } else {
+            logger.info("✅ sqlSessionFactory is properly injected");
+        }
+        
         try {
             conn = sqlSessionFactory.getConfiguration().getEnvironment().getDataSource().getConnection();
             DatabaseMetaData dbmd = conn.getMetaData();
@@ -168,6 +179,15 @@ public class ControllerMain {
 //			dailyActivator.destroy();
 //			Util.sleep(1000);
 //		}while(dailyActivator.isAlive());
+	}
+
+	
+	public SqlSessionFactory getSqlSessionFactory() {
+		return sqlSessionFactory;
+	}
+
+	public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+		this.sqlSessionFactory = sqlSessionFactory;
 	}
 
 	public DupStartChecker getDupStartChecker() {
@@ -974,13 +994,22 @@ public class ControllerMain {
 	 * @param queryParamMap
 	 * @param rowHandler
 	 */
-	public void getJobInstanceListByDynamicQueryWithRowHandler(Map queryParamMap, Object rowHandler) {
-		try {
-			jobInstanceManager.getJobInstancesByDynamicQueryWithRowHandler(queryParamMap, rowHandler);
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.job.dbselect.query.error", e, queryParamMap.toString()); // Job 검색 중 에러가 발생하였습니다 
-		}
+//	public void getJobInstanceListByDynamicQueryWithRowHandler(Map queryParamMap, Object rowHandler) {
+//		try {
+//			jobInstanceManager.getJobInstancesByDynamicQueryWithRowHandler(queryParamMap, rowHandler);
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.job.dbselect.query.error", e, queryParamMap.toString()); // Job 검색 중 에러가 발생하였습니다 
+//		}
+//	}
+	
+	public void getJobInstanceListByDynamicQueryWithRowHandler(Map<String, Object> queryParamMap, ResultHandler<JobInstance> rowHandler) {
+	    try {
+	        jobInstanceManager.getJobInstancesByDynamicQueryWithRowHandler(queryParamMap, rowHandler);
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.job.dbselect.query.error", e, queryParamMap.toString()); // Job 검색 중 에러가 발생하였습니다 
+	    }
 	}
+	
 
 	/**
 	 * 필요한 컬럼만 조회한다.
@@ -989,13 +1018,21 @@ public class ControllerMain {
 	 * @param queryParamMap
 	 * @param rowHandler
 	 */
-	public void getJobInstanceListFreeColumnWithRowHandler(Map queryParamMap, Object rowHandler) {
-		try {
-			jobInstanceManager.getJobInstanceListFreeColumnWithRowHandler(queryParamMap, rowHandler);
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.job.dbselect.query.error", e, queryParamMap.toString()); // Job 검색 중 에러가 발생하였습니다 
-		}
+//	public void getJobInstanceListFreeColumnWithRowHandler(Map queryParamMap, Object rowHandler) {
+//		try {
+//			jobInstanceManager.getJobInstanceListFreeColumnWithRowHandler(queryParamMap, rowHandler);
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.job.dbselect.query.error", e, queryParamMap.toString()); // Job 검색 중 에러가 발생하였습니다 
+//		}
+//	}
+	public void getJobInstanceListFreeColumnWithRowHandler(Map<String, Object> queryParamMap, ResultHandler<JobInstance> rowHandler) {
+	    try {
+	        jobInstanceManager.getJobInstanceListFreeColumnWithRowHandler(queryParamMap, rowHandler);
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.job.dbselect.query.error", e, queryParamMap.toString()); // Job 검색 중 에러가 발생하였습니다 
+	    }
 	}
+
 
 	/**
 	 * 필요한 컬럼만 조회한다. ($columnList$ 에 컬럼 목록 담는다)
@@ -1405,34 +1442,58 @@ public class ControllerMain {
 	 * @param auth
 	 * @return Job Instance Id
 	 */
+//	public String activateAndLockJob(String jobId, String procDate, AdminAuth auth) {
+//		try {
+//			Util.checkDateYYYYMMDD(procDate);
+//
+//			// JobDefinition 읽기. 파라미터, 선행조건 포함됨.
+//			JobDefinition jobdef = jobDefinitionManager.getJobDefinitionDeep(jobId);
+//			userManager.checkOperationPermission(jobdef.getJobGroupId(), jobId, "activateAndLockJob", auth); // 권한 체크.
+//			
+//			// JobInstance 생성 - activation.
+//			// 여기서는 LOCK 하지 않고 activate 시켜놓기만하고 scheduler 가 실행하도록 내버려준다.
+//			sqlMapClient.startTransaction();
+//			JobInstance jobins = activator.activateAndLock(jobdef, procDate, null, auth);
+//			sqlMapClient.commitTransaction();
+//			
+//			Util.logInfo(log, MSG.get("main.jobctl.activatelock", auth, jobins.getJobInstanceId(), procDate)); // [{0}]에서 처리일({2}) 로 인스턴스({1})를 생성 후 Lock 합니다
+//			return jobins.getJobInstanceId();
+//		}catch(SchedulerException e) {
+//			throw e;
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.jobctl.activatelock.error", e, auth, jobId); // [{0}]에서 {1}의 인스턴스를 생성하는 중에 에러가 발생하였습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception e) {
+//				e.printStackTrace(); // and ignore
+//			}
+//		}
+//	}
 	public String activateAndLockJob(String jobId, String procDate, AdminAuth auth) {
-		try {
-			Util.checkDateYYYYMMDD(procDate);
+	    try {
+	        Util.checkDateYYYYMMDD(procDate);
 
-			// JobDefinition 읽기. 파라미터, 선행조건 포함됨.
-			JobDefinition jobdef = jobDefinitionManager.getJobDefinitionDeep(jobId);
-			userManager.checkOperationPermission(jobdef.getJobGroupId(), jobId, "activateAndLockJob", auth); // 권한 체크.
-			
-			// JobInstance 생성 - activation.
-			// 여기서는 LOCK 하지 않고 activate 시켜놓기만하고 scheduler 가 실행하도록 내버려준다.
-			sqlMapClient.startTransaction();
-			JobInstance jobins = activator.activateAndLock(jobdef, procDate, null, auth);
-			sqlMapClient.commitTransaction();
-			
-			Util.logInfo(log, MSG.get("main.jobctl.activatelock", auth, jobins.getJobInstanceId(), procDate)); // [{0}]에서 처리일({2}) 로 인스턴스({1})를 생성 후 Lock 합니다
-			return jobins.getJobInstanceId();
-		}catch(SchedulerException e) {
-			throw e;
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.jobctl.activatelock.error", e, auth, jobId); // [{0}]에서 {1}의 인스턴스를 생성하는 중에 에러가 발생하였습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception e) {
-				e.printStackTrace(); // and ignore
-			}
-		}
+	        // JobDefinition 읽기. 파라미터, 선행조건 포함됨.
+	        JobDefinition jobdef = jobDefinitionManager.getJobDefinitionDeep(jobId);
+	        userManager.checkOperationPermission(jobdef.getJobGroupId(), jobId, "activateAndLockJob", auth); // 권한 체크.
+	        
+	        // JobInstance 생성 - activation.
+	        // 여기서는 LOCK 하지 않고 activate 시켜놓기만 하고 scheduler가 실행하도록 내버려 둔다.
+	        try (SqlSession session = sqlSessionFactory.openSession(false)) { // 트랜잭션 비자동 모드
+	            JobInstance jobins = activator.activateAndLock(jobdef, procDate, null, auth);
+	            session.commit(); // 커밋
+	            
+	            Util.logInfo(log, MSG.get("main.jobctl.activatelock", auth, jobins.getJobInstanceId(), procDate)); // [{0}]에서 처리일({2}) 로 인스턴스({1})를 생성 후 Lock 합니다
+	            return jobins.getJobInstanceId();
+	        }
+	    } catch (SchedulerException e) {
+	        throw e;
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.jobctl.activatelock.error", e, auth, jobId); // [{0}]에서 {1}의 인스턴스를 생성하는 중에 에러가 발생하였습니다
+	    }
 	}
+
 
 	/**
 	 * Job Instance 를 LOCK 함. LOCK 상태에서는 STATE 변경이 안됨.
@@ -1781,61 +1842,119 @@ public class ControllerMain {
 	 * @param auth
 	 * @return
 	 */
+//	public void forceEndOk(String jobInstanceId, AdminAuth auth) {
+//		JobInstance jobins   = null;
+//		try {
+//			jobins   = jobInstanceManager.getJobInstanceDeep(jobInstanceId);
+//			userManager.checkOperationPermission(jobins.getJobGroupId(), jobInstanceIdMap.getJobId(jobInstanceId), "forceEndOk", auth); // 권한 체크.
+//		}catch(SchedulerException e) {
+//			throw e;
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.job.dbselect.error", e, jobInstanceId); // {0}의 Job 정보 조회 중 에러가 발생하였습니다
+//		}
+//		
+//		if (!JobInstance.JOB_STATE_ENDED_FAIL.equals(jobins.getJobState()) && 
+//			!JobInstance.JOB_STATE_WAIT.equals(jobins.getJobState()) && 
+//			!JobInstance.JOB_STATE_SLEEP_RPT.equals(jobins.getJobState()) && 
+//			!JobInstance.JOB_STATE_EXPIRED.equals(jobins.getJobState()) &&
+//			!JobInstance.JOB_STATE_INIT.equals(jobins.getJobState()) &&
+//			!JobInstance.JOB_STATE_GHOST.equals(jobins.getJobState())) {
+//			throw logAndMakeSchedulerException("main.jobctl.state.error", (Throwable)null, jobInstanceId, jobins.getJobStateText(), "ForceEndOk"); // {1} 상태에서는 {2}를 할 수 없습니다 ({0})
+//		}
+//		
+//		try {
+//			sqlMapClient.startTransaction();
+//			if (!jobInstanceManager.setJobStateForEnd(jobInstanceId, true, MSG.get("main.jobctl.state.forceendok", auth), 0, true, jobins.getJobState(), jobins.getLastJobExeId())) {
+//				throw new SchedulerException("main.jobctl.state.inconsistent.error", auth, jobInstanceId); // [{0}]에서 인스턴스({1}) 컨트롤 중 상태 불일치 현상이 발생하였습니다
+//			}
+//			Util.logInfo(log, MSG.get("main.jobctl.forceendok", auth, jobInstanceId)); // [{0}]에서 인스턴스({1})를 강제 정상종료 (force endok) 처리합니다
+//
+//			// 상태변경으로 인해 돌아야하는 후행 놈들을 돌린다.
+//			jobRunResultProcessor.awakePreJobWaitingInstances(jobins.getJobId(), jobins.getProcDate());
+//
+//			// 4. Trigger Job 처리.
+//			// 4.0 부터는 parent Job 의 결과에 따른 멀티 분기 처리 고도화. 2016.7.26 
+//			List<PostJobTrigger> triggerList = TriggerProcessor.selectTrigger(jobins.getJobInstanceId(), jobins.getJobId(), jobins.getTriggerList(), true, new Properties());
+//			List<JobInstance> triggeredJobInsList = new ArrayList<JobInstance>();
+//			for (PostJobTrigger trigger : triggerList) {
+//				for (int i=1; i<=trigger.getJobInstanceCount(); i++) {
+//					JobInstance newJobIns = jobRunResultProcessor.activateTriggerJob(jobins.getJobInstanceId(), jobins.getLastJobExeId(), trigger.getTriggerJobId(), jobins.getProcDate(), trigger.getJobInstanceCount(), i);
+//					if (newJobIns != null) {
+//						triggeredJobInsList.add(newJobIns);
+//					}
+//				}
+//			}
+//					
+//			sqlMapClient.commitTransaction();
+//			
+//			// commit 후에 기동한다.
+//			jobStarter.askToStart(triggeredJobInsList);
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.jobctl.forceendok.error", e, auth, jobInstanceId); // [{0}]에서 {1}를 강제정상종료 (force endok) 하는 중에 에러가 발생하였습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception ignore) {
+//			}
+//		}
+//	}
+//	
+//	
 	public void forceEndOk(String jobInstanceId, AdminAuth auth) {
-		JobInstance jobins   = null;
-		try {
-			jobins   = jobInstanceManager.getJobInstanceDeep(jobInstanceId);
-			userManager.checkOperationPermission(jobins.getJobGroupId(), jobInstanceIdMap.getJobId(jobInstanceId), "forceEndOk", auth); // 권한 체크.
-		}catch(SchedulerException e) {
-			throw e;
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.job.dbselect.error", e, jobInstanceId); // {0}의 Job 정보 조회 중 에러가 발생하였습니다
-		}
-		
-		if (!JobInstance.JOB_STATE_ENDED_FAIL.equals(jobins.getJobState()) && 
-			!JobInstance.JOB_STATE_WAIT.equals(jobins.getJobState()) && 
-			!JobInstance.JOB_STATE_SLEEP_RPT.equals(jobins.getJobState()) && 
-			!JobInstance.JOB_STATE_EXPIRED.equals(jobins.getJobState()) &&
-			!JobInstance.JOB_STATE_INIT.equals(jobins.getJobState()) &&
-			!JobInstance.JOB_STATE_GHOST.equals(jobins.getJobState())) {
-			throw logAndMakeSchedulerException("main.jobctl.state.error", (Throwable)null, jobInstanceId, jobins.getJobStateText(), "ForceEndOk"); // {1} 상태에서는 {2}를 할 수 없습니다 ({0})
-		}
-		
-		try {
-			sqlMapClient.startTransaction();
-			if (!jobInstanceManager.setJobStateForEnd(jobInstanceId, true, MSG.get("main.jobctl.state.forceendok", auth), 0, true, jobins.getJobState(), jobins.getLastJobExeId())) {
-				throw new SchedulerException("main.jobctl.state.inconsistent.error", auth, jobInstanceId); // [{0}]에서 인스턴스({1}) 컨트롤 중 상태 불일치 현상이 발생하였습니다
-			}
-			Util.logInfo(log, MSG.get("main.jobctl.forceendok", auth, jobInstanceId)); // [{0}]에서 인스턴스({1})를 강제 정상종료 (force endok) 처리합니다
+	    JobInstance jobins = null;
+	    try {
+	        jobins = jobInstanceManager.getJobInstanceDeep(jobInstanceId);
+	        userManager.checkOperationPermission(jobins.getJobGroupId(), jobInstanceIdMap.getJobId(jobInstanceId), "forceEndOk", auth); // 권한 체크.
+	    } catch (SchedulerException e) {
+	        throw e;
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.job.dbselect.error", e, jobInstanceId); // {0}의 Job 정보 조회 중 에러가 발생하였습니다
+	    }
+	    
+	    if (!JobInstance.JOB_STATE_ENDED_FAIL.equals(jobins.getJobState()) &&
+	        !JobInstance.JOB_STATE_WAIT.equals(jobins.getJobState()) &&
+	        !JobInstance.JOB_STATE_SLEEP_RPT.equals(jobins.getJobState()) &&
+	        !JobInstance.JOB_STATE_EXPIRED.equals(jobins.getJobState()) &&
+	        !JobInstance.JOB_STATE_INIT.equals(jobins.getJobState()) &&
+	        !JobInstance.JOB_STATE_GHOST.equals(jobins.getJobState())) {
+	        throw logAndMakeSchedulerException("main.jobctl.state.error", (Throwable)null, jobInstanceId, jobins.getJobStateText(), "ForceEndOk"); // {1} 상태에서는 {2}를 할 수 없습니다 ({0})
+	    }
 
-			// 상태변경으로 인해 돌아야하는 후행 놈들을 돌린다.
-			jobRunResultProcessor.awakePreJobWaitingInstances(jobins.getJobId(), jobins.getProcDate());
+	    try (SqlSession session = sqlSessionFactory.openSession(false)) { // 트랜잭션 비자동 모드
+	        if (!jobInstanceManager.setJobStateForEnd(jobInstanceId, true, MSG.get("main.jobctl.state.forceendok", auth), 0, true, jobins.getJobState(), jobins.getLastJobExeId())) {
+	            throw new SchedulerException("main.jobctl.state.inconsistent.error", auth, jobInstanceId); // [{0}]에서 인스턴스({1}) 컨트롤 중 상태 불일치 현상이 발생하였습니다
+	        }
+	        Util.logInfo(log, MSG.get("main.jobctl.forceendok", auth, jobInstanceId)); // [{0}]에서 인스턴스({1})를 강제 정상종료 (force endok) 처리합니다
 
-			// 4. Trigger Job 처리.
-			// 4.0 부터는 parent Job 의 결과에 따른 멀티 분기 처리 고도화. 2016.7.26 
-			List<PostJobTrigger> triggerList = TriggerProcessor.selectTrigger(jobins.getJobInstanceId(), jobins.getJobId(), jobins.getTriggerList(), true, new Properties());
-			List<JobInstance> triggeredJobInsList = new ArrayList<JobInstance>();
-			for (PostJobTrigger trigger : triggerList) {
-				for (int i=1; i<=trigger.getJobInstanceCount(); i++) {
-					JobInstance newJobIns = jobRunResultProcessor.activateTriggerJob(jobins.getJobInstanceId(), jobins.getLastJobExeId(), trigger.getTriggerJobId(), jobins.getProcDate(), trigger.getJobInstanceCount(), i);
-					if (newJobIns != null) {
-						triggeredJobInsList.add(newJobIns);
-					}
-				}
-			}
-					
-			sqlMapClient.commitTransaction();
-			
-			// commit 후에 기동한다.
-			jobStarter.askToStart(triggeredJobInsList);
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.jobctl.forceendok.error", e, auth, jobInstanceId); // [{0}]에서 {1}를 강제정상종료 (force endok) 하는 중에 에러가 발생하였습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception ignore) {
-			}
-		}
+	        // 상태 변경으로 인해 돌아야 하는 후행 놈들을 돌린다.
+	        jobRunResultProcessor.awakePreJobWaitingInstances(jobins.getJobId(), jobins.getProcDate());
+
+	        // 4. Trigger Job 처리.
+	        // 4.0 부터는 parent Job 의 결과에 따른 멀티 분기 처리 고도화. 2016.7.26 
+	        List<PostJobTrigger> triggerList = TriggerProcessor.selectTrigger(jobins.getJobInstanceId(), jobins.getJobId(), jobins.getTriggerList(), true, new Properties());
+	        List<JobInstance> triggeredJobInsList = new ArrayList<JobInstance>();
+	        for (PostJobTrigger trigger : triggerList) {
+	            for (int i = 1; i <= trigger.getJobInstanceCount(); i++) {
+	                JobInstance newJobIns = jobRunResultProcessor.activateTriggerJob(jobins.getJobInstanceId(), jobins.getLastJobExeId(), trigger.getTriggerJobId(), jobins.getProcDate(), trigger.getJobInstanceCount(), i);
+	                if (newJobIns != null) {
+	                    triggeredJobInsList.add(newJobIns);
+	                }
+	            }
+	        }
+
+	        session.commit(); // 커밋
+
+	        // commit 후에 기동한다.
+	        jobStarter.askToStart(triggeredJobInsList);
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.jobctl.forceendok.error", e, auth, jobInstanceId); // [{0}]에서 {1}를 강제정상종료 (force endok) 하는 중에 에러가 발생하였습니다
+	    } finally {
+	        // 트랜잭션 종료
+	        try {
+	            // MyBatis는 자동으로 관리하므로, 여기서 세션을 종료할 필요 없음.
+	        } catch (Exception ignore) {
+	        }
+	    }
 	}
 
 	/**
@@ -1848,41 +1967,88 @@ public class ControllerMain {
 	 * @return
 	 * @since 3.6.3
 	 */
+//	public void forceChangeToGhost(String jobInstanceId, AdminAuth auth) {
+//		JobInstance jobins   = null;
+//		try {
+//			jobins   = jobInstanceManager.getJobInstance(jobInstanceId);
+//			userManager.checkOperationPermission(jobins.getJobGroupId(), jobInstanceIdMap.getJobId(jobInstanceId), "forceChangeToGhost", auth); // 권한 체크.
+//		}catch(SchedulerException e) {
+//			throw e;
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.job.dbselect.error", e, jobInstanceId); // {0}의 Job 정보 조회 중 에러가 발생하였습니다
+//		}
+//		
+//		if (!JobInstance.JOB_STATE_RUNNING.equals(jobins.getJobState()) && 
+//			!JobInstance.JOB_STATE_SUSPENDED.equals(jobins.getJobState())) {
+//			throw logAndMakeSchedulerException("main.jobctl.state.error", (Throwable)null, jobInstanceId, jobins.getJobStateText(), "forceChangeToGhost"); // {1} 상태에서는 {2}를 할 수 없습니다 ({0})
+//		}
+//		
+//		try {
+//			if (!jobInstanceManager.setJobStateWithCheck(jobInstanceId, jobins.getJobState(), JobInstance.JOB_STATE_GHOST, auth+" change to Ghost")) {
+//				throw new SchedulerException("main.jobctl.state.inconsistent.error", auth, jobInstanceId); // [{0}]에서 인스턴스({1}) 컨트롤 중 상태 불일치 현상이 발생하였습니다
+//			}
+//			Util.logInfo(log, MSG.get("main.jobctl.changetoghost", auth, jobInstanceId)); // [{0}]에서 {1}를 Ghost로 변경합니다
+//
+//			// running list 에서 빼냄.
+//			JobExecution jobexe = jobExecutionManager.getJobExecution(jobins.getLastJobExeId());
+//			runningJobStateMonitor.removeRunningJobExecution(jobexe);
+//			
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.jobctl.forceendok.error", e, auth, jobInstanceId); // [{0}]에서 {1}를 강제정상종료 (force endok) 하는 중에 에러가 발생하였습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception ignore) {
+//			}
+//		}
+//	}
 	public void forceChangeToGhost(String jobInstanceId, AdminAuth auth) {
-		JobInstance jobins   = null;
-		try {
-			jobins   = jobInstanceManager.getJobInstance(jobInstanceId);
-			userManager.checkOperationPermission(jobins.getJobGroupId(), jobInstanceIdMap.getJobId(jobInstanceId), "forceChangeToGhost", auth); // 권한 체크.
-		}catch(SchedulerException e) {
-			throw e;
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.job.dbselect.error", e, jobInstanceId); // {0}의 Job 정보 조회 중 에러가 발생하였습니다
-		}
-		
-		if (!JobInstance.JOB_STATE_RUNNING.equals(jobins.getJobState()) && 
-			!JobInstance.JOB_STATE_SUSPENDED.equals(jobins.getJobState())) {
-			throw logAndMakeSchedulerException("main.jobctl.state.error", (Throwable)null, jobInstanceId, jobins.getJobStateText(), "forceChangeToGhost"); // {1} 상태에서는 {2}를 할 수 없습니다 ({0})
-		}
-		
-		try {
-			if (!jobInstanceManager.setJobStateWithCheck(jobInstanceId, jobins.getJobState(), JobInstance.JOB_STATE_GHOST, auth+" change to Ghost")) {
-				throw new SchedulerException("main.jobctl.state.inconsistent.error", auth, jobInstanceId); // [{0}]에서 인스턴스({1}) 컨트롤 중 상태 불일치 현상이 발생하였습니다
-			}
-			Util.logInfo(log, MSG.get("main.jobctl.changetoghost", auth, jobInstanceId)); // [{0}]에서 {1}를 Ghost로 변경합니다
+	    JobInstance jobins = null;
+	    try {
+	        // JobInstance 정보 조회
+	        jobins = jobInstanceManager.getJobInstance(jobInstanceId);
+	        userManager.checkOperationPermission(jobins.getJobGroupId(), jobInstanceIdMap.getJobId(jobInstanceId), "forceChangeToGhost", auth); // 권한 체크
+	    } catch (SchedulerException e) {
+	        throw e;
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.job.dbselect.error", e, jobInstanceId); // {0}의 Job 정보 조회 중 에러가 발생하였습니다
+	    }
 
-			// running list 에서 빼냄.
-			JobExecution jobexe = jobExecutionManager.getJobExecution(jobins.getLastJobExeId());
-			runningJobStateMonitor.removeRunningJobExecution(jobexe);
-			
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.jobctl.forceendok.error", e, auth, jobInstanceId); // [{0}]에서 {1}를 강제정상종료 (force endok) 하는 중에 에러가 발생하였습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception ignore) {
-			}
-		}
+	    // 상태 체크
+	    if (!JobInstance.JOB_STATE_RUNNING.equals(jobins.getJobState()) && 
+	        !JobInstance.JOB_STATE_SUSPENDED.equals(jobins.getJobState())) {
+	        throw logAndMakeSchedulerException("main.jobctl.state.error", (Throwable) null, jobInstanceId, jobins.getJobStateText(), "forceChangeToGhost"); // {1} 상태에서는 {2}를 할 수 없습니다 ({0})
+	    }
+
+	    try {
+	        // 상태 변경
+	        if (!jobInstanceManager.setJobStateWithCheck(jobInstanceId, jobins.getJobState(), JobInstance.JOB_STATE_GHOST, auth + " change to Ghost")) {
+	            throw new SchedulerException("main.jobctl.state.inconsistent.error", auth, jobInstanceId); // [{0}]에서 인스턴스({1}) 컨트롤 중 상태 불일치 현상이 발생하였습니다
+	        }
+	        Util.logInfo(log, MSG.get("main.jobctl.changetoghost", auth, jobInstanceId)); // [{0}]에서 {1}를 Ghost로 변경합니다
+
+	        // running list에서 빼냄
+	        JobExecution jobexe = jobExecutionManager.getJobExecution(jobins.getLastJobExeId());
+	        runningJobStateMonitor.removeRunningJobExecution(jobexe);
+
+	        // MyBatis 세션을 사용하여 상태 업데이트 쿼리 실행
+	        Map<String, Object> params = new HashMap<>();
+	        params.put("jobInstanceId", jobInstanceId);
+	        params.put("newState", JobInstance.JOB_STATE_GHOST);
+	        params.put("auth", auth);
+
+	        try (SqlSession session = sqlSessionFactory.openSession()) {
+	            // 상태를 'GHOST'로 업데이트하는 쿼리 호출
+	            session.update("nbs.scheduler.updateJobInstanceState", params);
+	            session.commit();
+	        }
+
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.jobctl.forceendok.error", e, auth, jobInstanceId); // [{0}]에서 {1}를 강제정상종료 (force endok) 하는 중에 에러가 발생하였습니다
+	    }
 	}
+
+
 	
 	// ###################################################################################################################
 	//   여기부터는 Job Instace 작업
@@ -1899,28 +2065,48 @@ public class ControllerMain {
 	 * @param auth
 	 * @return 변경된 JobInstance
 	 */
-	public JobInstance modifyJobInstance(JobInstance jobins, AdminAuth auth) {
-		try {
-			userManager.checkOperationPermission(jobins.getJobGroupId(), jobins.getJobId(), "modifyJobInstance", auth); // 권한 체크.
-			sqlMapClient.startTransaction();
-			jobInstanceManager.updateJobInstance(jobins);
-			sqlMapClient.commitTransaction();
-			
-			Util.logInfo(log, MSG.get("main.jobins.modify", auth, jobins)); // [{0}]에서 Job 인스턴스를 변경합니다. {1}
+//	public JobInstance modifyJobInstance(JobInstance jobins, AdminAuth auth) {
+//		try {
+//			userManager.checkOperationPermission(jobins.getJobGroupId(), jobins.getJobId(), "modifyJobInstance", auth); // 권한 체크.
+//			sqlMapClient.startTransaction();
+//			jobInstanceManager.updateJobInstance(jobins);
+//			sqlMapClient.commitTransaction();
+//			
+//			Util.logInfo(log, MSG.get("main.jobins.modify", auth, jobins)); // [{0}]에서 Job 인스턴스를 변경합니다. {1}
+//
+//			// update된 내용으로 다시 읽어서 리턴한다.
+//			return jobInstanceManager.getJobInstanceDeep(jobins.getJobInstanceId());
+//		}catch (SchedulerException e) {
+//			throw e;
+//		}catch (SQLException e) {
+//			throw logAndMakeSchedulerException("main.jobins.crud.error", auth, e, jobins.getJobInstanceId(), 2); // Job 인스턴스 {0} {2#변경} 중 에러가 발생하였습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception e) {
+//				e.printStackTrace(); // and ignore
+//			}
+//		}
+//	}
 
-			// update된 내용으로 다시 읽어서 리턴한다.
-			return jobInstanceManager.getJobInstanceDeep(jobins.getJobInstanceId());
-		}catch (SchedulerException e) {
-			throw e;
-		}catch (SQLException e) {
-			throw logAndMakeSchedulerException("main.jobins.crud.error", auth, e, jobins.getJobInstanceId(), 2); // Job 인스턴스 {0} {2#변경} 중 에러가 발생하였습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception e) {
-				e.printStackTrace(); // and ignore
-			}
-		}
+	public JobInstance modifyJobInstance(JobInstance jobins, AdminAuth auth) {
+	    try {
+	        userManager.checkOperationPermission(jobins.getJobGroupId(), jobins.getJobId(), "modifyJobInstance", auth); // 권한 체크.
+	        
+	        try (SqlSession session = sqlSessionFactory.openSession(false)) { // 트랜잭션 비자동 모드
+	            jobInstanceManager.updateJobInstance(jobins);
+	            session.commit(); // 커밋
+	            
+	            Util.logInfo(log, MSG.get("main.jobins.modify", auth, jobins)); // [{0}]에서 Job 인스턴스를 변경합니다. {1}
+
+	            // update된 내용으로 다시 읽어서 리턴한다.
+	            return jobInstanceManager.getJobInstanceDeep(jobins.getJobInstanceId());
+	        }
+	    } catch (SchedulerException e) {
+	        throw e;
+	    } catch (SQLException e) {
+	        throw logAndMakeSchedulerException("main.jobins.crud.error", auth, e, jobins.getJobInstanceId(), 2); // Job 인스턴스 {0} {2#변경} 중 에러가 발생하였습니다
+	    }
 	}
 
 	/**
@@ -1933,34 +2119,60 @@ public class ControllerMain {
 	 * @param auth
 	 * @return 변경된 JobInstance
 	 */
+//	public JobInstance modifyJobInstanceParameters(String jobInstanceId, Map newParams, AdminAuth auth) {
+//		JobInstance jobins = null;
+//		try {
+//			jobins = jobInstanceManager.getJobInstance(jobInstanceId);
+//			userManager.checkOperationPermission(jobins.getJobGroupId(), jobInstanceIdMap.getJobId(jobInstanceId), "modifyJobInstanceParameters", auth); // 권한 체크.
+//			sqlMapClient.startTransaction();
+//			if (jobins != null) {
+//				jobInstanceManager.deleteParameter(jobins);
+//				jobins.setInParameters(newParams);
+//				jobInstanceManager.insertParameter(jobins);
+//				sqlMapClient.commitTransaction();
+//			}
+//			
+//			Util.logInfo(log, MSG.get("main.jobins.modify", auth, jobins)); // [{0}]에서 Job 인스턴스를 변경합니다 {1}
+//			// update된 내용으로 다시 읽어서 리턴한다.
+//			return jobInstanceManager.getJobInstanceDeep(jobins.getJobInstanceId());
+//		}catch(SchedulerException e) {
+//			throw e;
+//		}catch (SQLException e) {
+//			throw logAndMakeSchedulerException("main.jobins.crud.error", auth, e, jobins.getJobInstanceId(), 2); // Job 인스턴스 {0} {2#변경} 중 에러가 발생하였습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception e) {
+//				e.printStackTrace(); // and ignore
+//			}
+//		}
+//	}
 	public JobInstance modifyJobInstanceParameters(String jobInstanceId, Map newParams, AdminAuth auth) {
-		JobInstance jobins = null;
-		try {
-			jobins = jobInstanceManager.getJobInstance(jobInstanceId);
-			userManager.checkOperationPermission(jobins.getJobGroupId(), jobInstanceIdMap.getJobId(jobInstanceId), "modifyJobInstanceParameters", auth); // 권한 체크.
-			sqlMapClient.startTransaction();
-			if (jobins != null) {
-				jobInstanceManager.deleteParameter(jobins);
-				jobins.setInParameters(newParams);
-				jobInstanceManager.insertParameter(jobins);
-				sqlMapClient.commitTransaction();
-			}
-			
-			Util.logInfo(log, MSG.get("main.jobins.modify", auth, jobins)); // [{0}]에서 Job 인스턴스를 변경합니다 {1}
-			// update된 내용으로 다시 읽어서 리턴한다.
-			return jobInstanceManager.getJobInstanceDeep(jobins.getJobInstanceId());
-		}catch(SchedulerException e) {
-			throw e;
-		}catch (SQLException e) {
-			throw logAndMakeSchedulerException("main.jobins.crud.error", auth, e, jobins.getJobInstanceId(), 2); // Job 인스턴스 {0} {2#변경} 중 에러가 발생하였습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception e) {
-				e.printStackTrace(); // and ignore
-			}
-		}
+	    JobInstance jobins = null;
+	    try {
+	        jobins = jobInstanceManager.getJobInstance(jobInstanceId);
+	        userManager.checkOperationPermission(jobins.getJobGroupId(), jobInstanceIdMap.getJobId(jobInstanceId), "modifyJobInstanceParameters", auth); // 권한 체크.
+	        
+	        try (SqlSession session = sqlSessionFactory.openSession(false)) { // 트랜잭션 비자동 모드
+	            if (jobins != null) {
+	                jobInstanceManager.deleteParameter(jobins);  // 기존 파라미터 삭제
+	                jobins.setInParameters(newParams);  // 새로운 파라미터 설정
+	                jobInstanceManager.insertParameter(jobins);  // 새로운 파라미터 삽입
+	                session.commit();  // 커밋
+	            }
+
+	            Util.logInfo(log, MSG.get("main.jobins.modify", auth, jobins)); // [{0}]에서 Job 인스턴스를 변경합니다 {1}
+	            
+	            // 업데이트된 내용으로 다시 읽어서 리턴한다.
+	            return jobInstanceManager.getJobInstanceDeep(jobins.getJobInstanceId());
+	        }
+	    } catch (SchedulerException e) {
+	        throw e;
+	    } catch (SQLException e) {
+	        throw logAndMakeSchedulerException("main.jobins.crud.error", auth, e, jobins.getJobInstanceId(), 2); // Job 인스턴스 {0} {2#변경} 중 에러가 발생하였습니다
+	    }
 	}
+
 
 	/**
 	 * Job 인스턴스의 Agent Id 를 변경함.
@@ -1996,53 +2208,91 @@ public class ControllerMain {
 	 * Job Definition 추가. 비상용 API
 	 * @return 건수
 	 */
+//	public int addJobDefinition(JobDefinition jobdef, AdminAuth auth) {
+//		try {
+//			userManager.checkOperationPermission(jobdef.getJobGroupId(), jobdef.getJobId(), "addJobDefinition", auth); // 권한 체크.
+//			sqlMapClient.startTransaction();
+//			int c = jobDefinitionManager.insertJobDefinition(jobdef);
+//			sqlMapClient.commitTransaction();
+//			
+//			Util.logInfo(log, MSG.get("main.jobdef.add", auth, jobdef.getJobId(), jobdef.toString())); // [{0}]에서 신규 Job({1})을 생성합니다 {2} 
+//			return c;
+//		}catch(SchedulerException e) {
+//			throw e;
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.jobdef.crud.error", auth, e, jobdef.getJobId(), 0); // Job {0} 의 등록정보 {1,choice,0#생성|1#조회|2#변경|3#삭제} 중 에러가 발생하였습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception e) {
+//				e.printStackTrace(); // and ignore
+//			}
+//		}
+//	}
 	public int addJobDefinition(JobDefinition jobdef, AdminAuth auth) {
-		try {
-			userManager.checkOperationPermission(jobdef.getJobGroupId(), jobdef.getJobId(), "addJobDefinition", auth); // 권한 체크.
-			sqlMapClient.startTransaction();
-			int c = jobDefinitionManager.insertJobDefinition(jobdef);
-			sqlMapClient.commitTransaction();
-			
-			Util.logInfo(log, MSG.get("main.jobdef.add", auth, jobdef.getJobId(), jobdef.toString())); // [{0}]에서 신규 Job({1})을 생성합니다 {2} 
-			return c;
-		}catch(SchedulerException e) {
-			throw e;
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.jobdef.crud.error", auth, e, jobdef.getJobId(), 0); // Job {0} 의 등록정보 {1,choice,0#생성|1#조회|2#변경|3#삭제} 중 에러가 발생하였습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception e) {
-				e.printStackTrace(); // and ignore
-			}
-		}
+	    try {
+	        userManager.checkOperationPermission(jobdef.getJobGroupId(), jobdef.getJobId(), "addJobDefinition", auth); // 권한 체크.
+	        
+	        try (SqlSession session = sqlSessionFactory.openSession(false)) { // 트랜잭션 비자동 모드
+	            int c = jobDefinitionManager.insertJobDefinition(jobdef);
+	            session.commit(); // 커밋
+
+	            Util.logInfo(log, MSG.get("main.jobdef.add", auth, jobdef.getJobId(), jobdef.toString())); // [{0}]에서 신규 Job({1})을 생성합니다 {2} 
+	            return c;
+	        }
+	    } catch (SchedulerException e) {
+	        throw e;
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.jobdef.crud.error", auth, e, jobdef.getJobId(), 0); // Job {0} 의 등록정보 {1,choice,0#생성|1#조회|2#변경|3#삭제} 중 에러가 발생하였습니다
+	    }
 	}
+
 
 	/**
 	 * Job Definition 정보 직접 수정. 비상용 API
 	 * @return 변경된 Job Definition
 	 */
+//	public JobDefinition modifyJobDefinition(JobDefinition jobdef, AdminAuth auth) {
+//		try {
+//			userManager.checkOperationPermission(jobdef.getJobGroupId(), jobdef.getJobId(), "modifyJobDefinition", auth); // 권한 체크.
+//			sqlMapClient.startTransaction();
+//			jobDefinitionManager.updateJobDefinition(jobdef);
+//			sqlMapClient.commitTransaction();
+//			
+//			Util.logInfo(log, MSG.get("main.jobdef.modify", auth, jobdef.getJobId(), jobdef.toString())); // [{0}]에서 Job 등록정보({1})를 변경합니다 {2}
+//			return jobDefinitionManager.getJobDefinitionDeep(jobdef.getJobId());
+//		}catch (SchedulerException e) {
+//			throw e;
+//		}catch (SQLException e) {
+//			throw logAndMakeSchedulerException("main.jobdef.crud.error", auth, e, jobdef.getJobId(), 2); // Job 등록정보 {0} {2#변경} 중 에러가 발생하였습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception e) {
+//				e.printStackTrace(); // and ignore
+//			}
+//		}
+//	}
 	public JobDefinition modifyJobDefinition(JobDefinition jobdef, AdminAuth auth) {
-		try {
-			userManager.checkOperationPermission(jobdef.getJobGroupId(), jobdef.getJobId(), "modifyJobDefinition", auth); // 권한 체크.
-			sqlMapClient.startTransaction();
-			jobDefinitionManager.updateJobDefinition(jobdef);
-			sqlMapClient.commitTransaction();
-			
-			Util.logInfo(log, MSG.get("main.jobdef.modify", auth, jobdef.getJobId(), jobdef.toString())); // [{0}]에서 Job 등록정보({1})를 변경합니다 {2}
-			return jobDefinitionManager.getJobDefinitionDeep(jobdef.getJobId());
-		}catch (SchedulerException e) {
-			throw e;
-		}catch (SQLException e) {
-			throw logAndMakeSchedulerException("main.jobdef.crud.error", auth, e, jobdef.getJobId(), 2); // Job 등록정보 {0} {2#변경} 중 에러가 발생하였습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception e) {
-				e.printStackTrace(); // and ignore
-			}
-		}
+	    try {
+	        userManager.checkOperationPermission(jobdef.getJobGroupId(), jobdef.getJobId(), "modifyJobDefinition", auth); // 권한 체크.
+	        
+	        try (SqlSession session = sqlSessionFactory.openSession(false)) { // 트랜잭션 비자동 모드
+	            jobDefinitionManager.updateJobDefinition(jobdef);
+	            session.commit(); // 커밋
+
+	            Util.logInfo(log, MSG.get("main.jobdef.modify", auth, jobdef.getJobId(), jobdef.toString())); // [{0}]에서 Job 등록정보({1})를 변경합니다 {2}
+	            
+	            // 수정된 내용으로 다시 읽어서 리턴한다.
+	            return jobDefinitionManager.getJobDefinitionDeep(jobdef.getJobId());
+	        }
+	    } catch (SchedulerException e) {
+	        throw e;
+	    } catch (SQLException e) {
+	        throw logAndMakeSchedulerException("main.jobdef.crud.error", auth, e, jobdef.getJobId(), 2); // Job 등록정보 {0} {2#변경} 중 에러가 발생하였습니다
+	    }
 	}
+
 	
 	/**
 	 * JobDefinition 삭제. 비상용 API
@@ -2050,28 +2300,48 @@ public class ControllerMain {
 	 * @param auth
 	 * @return 성공여부
 	 */
+//	public boolean deleteJobDefinition(String jobId, AdminAuth auth) {
+//		try {
+//			userManager.checkOperationPermission(
+//				jobDefinitionManager.getJobGroupId(jobId), 
+//				jobId, "deleteJobDefinition", auth); // 권한 체크.
+//			sqlMapClient.startTransaction();
+//			int cnt = jobDefinitionManager.deleteJobDefinition(jobId);
+//			sqlMapClient.commitTransaction();
+//			Util.logInfo(log, MSG.get("main.jobdef.delete", auth, jobId)); // [{0}]에서 Job 등록정보({1})를 삭제합니다.
+//			return cnt > 0;
+//		}catch(SchedulerException e) {
+//			throw e;
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.jobdef.crud.error", auth, e, jobId, 3); // Job 등록정보 {0} {3#삭제} 중 에러가 발생하였습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception e) {
+//				e.printStackTrace(); // and ignore
+//			}
+//		}
+//	}
 	public boolean deleteJobDefinition(String jobId, AdminAuth auth) {
-		try {
-			userManager.checkOperationPermission(
-				jobDefinitionManager.getJobGroupId(jobId), 
-				jobId, "deleteJobDefinition", auth); // 권한 체크.
-			sqlMapClient.startTransaction();
-			int cnt = jobDefinitionManager.deleteJobDefinition(jobId);
-			sqlMapClient.commitTransaction();
-			Util.logInfo(log, MSG.get("main.jobdef.delete", auth, jobId)); // [{0}]에서 Job 등록정보({1})를 삭제합니다.
-			return cnt > 0;
-		}catch(SchedulerException e) {
-			throw e;
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.jobdef.crud.error", auth, e, jobId, 3); // Job 등록정보 {0} {3#삭제} 중 에러가 발생하였습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception e) {
-				e.printStackTrace(); // and ignore
-			}
-		}
+	    try {
+	        userManager.checkOperationPermission(
+	            jobDefinitionManager.getJobGroupId(jobId),
+	            jobId, "deleteJobDefinition", auth); // 권한 체크.
+
+	        try (SqlSession session = sqlSessionFactory.openSession(false)) { // 트랜잭션 비자동 모드
+	            int cnt = jobDefinitionManager.deleteJobDefinition(jobId);
+	            session.commit(); // 커밋
+
+	            Util.logInfo(log, MSG.get("main.jobdef.delete", auth, jobId)); // [{0}]에서 Job 등록정보({1})를 삭제합니다.
+	            return cnt > 0;
+	        }
+	    } catch (SchedulerException e) {
+	        throw e;
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.jobdef.crud.error", auth, e, jobId, 3); // Job 등록정보 {0} {3#삭제} 중 에러가 발생하였습니다
+	    }
 	}
+
 
 	/**
 	 * Calendar 리스트 조회
@@ -2192,38 +2462,67 @@ public class ControllerMain {
 	 * @param auth
 	 * @return 요청번호
 	 */
+//	public String addJobDefinitionStg(JobDefinitionStg jobdef, AdminAuth auth) {
+//		try {
+//			jobdef.setReqNo(jobDefinitionStgManager.newReqNo());
+//			if ("add".equals(jobdef.getReqType()) && jobDefinitionManager.getJobDefinition(jobdef.getJobId()) != null) {
+//				throw new SchedulerException("main.jobdefstg.jobid.dup", jobdef.getJobId()); // {0} 는 이미 존재하는 Job 입니다
+//			}
+//			
+//			// license 체크
+//			if("add".equals(jobdef.getReqType())){
+//				int jobDefinitionCount = jobDefinitionManager.getJobDefinitionsCount();
+//				int maxJobDefinitionCount = licenseManager.getMaxJobDefinitionCount();
+//				
+//				if(maxJobDefinitionCount != 0 && jobDefinitionCount >= maxJobDefinitionCount){
+//					throw logAndMakeSchedulerException("main.jobdef.maxcount.error", null, jobDefinitionCount, maxJobDefinitionCount);
+//				}
+//			}
+//			
+//			sqlMapClient.startTransaction();
+//			int c = jobDefinitionStgManager.insertJobDefinitionStg(jobdef);
+//			sqlMapClient.commitTransaction();
+//			Util.logInfo(log, MSG.get("main.jobdefstg.add", auth, jobdef.getJobId(), jobdef.getReqType())); // [{0}]에서 Job({1})을 {2} 요청을 하였습니다 
+//			return c>0 ? jobdef.getReqNo() : null;
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.jobdefstg.add.error", auth, e, jobdef.getJobId()); // Job {0} 요청 중 에러가 발생하였습니다. 이미 요청 진행 중이거나, 동일 Job Id 의 중복 요청일 수 있습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception e) {
+//				e.printStackTrace(); // and ignore
+//			}
+//		}
+//	}
 	public String addJobDefinitionStg(JobDefinitionStg jobdef, AdminAuth auth) {
-		try {
-			jobdef.setReqNo(jobDefinitionStgManager.newReqNo());
-			if ("add".equals(jobdef.getReqType()) && jobDefinitionManager.getJobDefinition(jobdef.getJobId()) != null) {
-				throw new SchedulerException("main.jobdefstg.jobid.dup", jobdef.getJobId()); // {0} 는 이미 존재하는 Job 입니다
-			}
-			
-			// license 체크
-			if("add".equals(jobdef.getReqType())){
-				int jobDefinitionCount = jobDefinitionManager.getJobDefinitionsCount();
-				int maxJobDefinitionCount = licenseManager.getMaxJobDefinitionCount();
-				
-				if(maxJobDefinitionCount != 0 && jobDefinitionCount >= maxJobDefinitionCount){
-					throw logAndMakeSchedulerException("main.jobdef.maxcount.error", null, jobDefinitionCount, maxJobDefinitionCount);
-				}
-			}
-			
-			sqlMapClient.startTransaction();
-			int c = jobDefinitionStgManager.insertJobDefinitionStg(jobdef);
-			sqlMapClient.commitTransaction();
-			Util.logInfo(log, MSG.get("main.jobdefstg.add", auth, jobdef.getJobId(), jobdef.getReqType())); // [{0}]에서 Job({1})을 {2} 요청을 하였습니다 
-			return c>0 ? jobdef.getReqNo() : null;
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.jobdefstg.add.error", auth, e, jobdef.getJobId()); // Job {0} 요청 중 에러가 발생하였습니다. 이미 요청 진행 중이거나, 동일 Job Id 의 중복 요청일 수 있습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception e) {
-				e.printStackTrace(); // and ignore
-			}
-		}
+	    try {
+	        jobdef.setReqNo(jobDefinitionStgManager.newReqNo());
+	        if ("add".equals(jobdef.getReqType()) && jobDefinitionManager.getJobDefinition(jobdef.getJobId()) != null) {
+	            throw new SchedulerException("main.jobdefstg.jobid.dup", jobdef.getJobId()); // {0} 는 이미 존재하는 Job 입니다
+	        }
+
+	        // license 체크
+	        if("add".equals(jobdef.getReqType())){
+	            int jobDefinitionCount = jobDefinitionManager.getJobDefinitionsCount();
+	            int maxJobDefinitionCount = licenseManager.getMaxJobDefinitionCount();
+
+	            if(maxJobDefinitionCount != 0 && jobDefinitionCount >= maxJobDefinitionCount){
+	                throw logAndMakeSchedulerException("main.jobdef.maxcount.error", null, jobDefinitionCount, maxJobDefinitionCount);
+	            }
+	        }
+
+	        try (SqlSession session = sqlSessionFactory.openSession(false)) { // 트랜잭션 비자동 모드
+	            int c = jobDefinitionStgManager.insertJobDefinitionStg(jobdef);
+	            session.commit(); // 커밋
+
+	            Util.logInfo(log, MSG.get("main.jobdefstg.add", auth, jobdef.getJobId(), jobdef.getReqType())); // [{0}]에서 Job({1})을 {2} 요청을 하였습니다 
+	            return c > 0 ? jobdef.getReqNo() : null;
+	        }
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.jobdefstg.add.error", auth, e, jobdef.getJobId()); // Job {0} 요청 중 에러가 발생하였습니다. 이미 요청 진행 중이거나, 동일 Job Id 의 중복 요청일 수 있습니다
+	    }
 	}
+
 
 	/**
 	 * JobDefinition 변경/신규/삭제 요청 내역 조회
@@ -2250,102 +2549,200 @@ public class ControllerMain {
 		}
 	}
 	
-	public void getJobDefinitionStgListWithRH(String queryCondition, Object rowHandler) {
-		try {
-			jobDefinitionStgManager.getJobDefinitionStgsByQueryWithRH(queryCondition, rowHandler);
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.jobdefstg.dbselect.query.error", e, queryCondition); // 요청 정보 검색 중 에러가 발생하였습니다
-		}
+//	public void getJobDefinitionStgListWithRH(String queryCondition, Object rowHandler) {
+//		try {
+//			jobDefinitionStgManager.getJobDefinitionStgsByQueryWithRH(queryCondition, rowHandler);
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.jobdefstg.dbselect.query.error", e, queryCondition); // 요청 정보 검색 중 에러가 발생하였습니다
+//		}
+//	}
+//	public void getJobDefinitionStgListWithRH(String queryCondition, Object rowHandler) {
+//	    try {
+//	        // rowHandler를 ResultHandler로 타입 캐스팅
+//	        jobDefinitionStgManager.getJobDefinitionStgsByQueryWithRH(queryCondition, (ResultHandler<JobDefinitionStg>) rowHandler);
+//	    } catch (Exception e) {
+//	        throw logAndMakeSchedulerException("main.jobdefstg.dbselect.query.error", e, queryCondition); // 요청 정보 검색 중 에러가 발생하였습니다
+//	    }
+//	}
+	public void getJobDefinitionStgListWithRH(String queryCondition, ResultHandler<JobDefinitionStg> rowHandler) {
+	    try {
+	        jobDefinitionStgManager.getJobDefinitionStgsByQueryWithRH(queryCondition, rowHandler);
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.jobdefstg.dbselect.query.error", e, queryCondition); // 요청 정보 검색 중 에러가 발생하였습니다
+	    }
 	}
 
+
+//	public void approveJobDefinitionStgToJobDefinition(String reqNo, String jobId, String reqARReason, AdminAuth auth) {
+//		boolean actionOk=false;
+//		JobDefinitionStg jobdef = null;
+//		
+//		try {
+//			User user = userManager.getUser(auth.getOperatorId()); 
+//			jobdef = jobDefinitionStgManager.getJobDefinitionStgDeep(reqNo, jobId);
+//			userManager.checkOperationPermission(jobdef.getJobGroupId(), jobId, "approveJobDefinitionStgToJobDefinition", auth); // 권한 체크.
+//			jobdef.setReqOperatorId(user.getId());
+//			jobdef.setReqOperatorName(user.getName());
+//			jobdef.setReqOperatorIp(auth.getOperatorIp());
+//			if (!"Q".equals(jobdef.getReqState())) { // 상태가 요청이 아닌 경우는 에러. 
+//				throw new SchedulerException("main.jobdefstg.state.not.q", reqNo); // {0}은 요청 상태가 아닙니다
+//			}
+//			
+//			// license 체크
+//			if("add".equalsIgnoreCase(jobdef.getReqType())){
+//				int jobDefinitionCount = jobDefinitionManager.getJobDefinitionsCount();
+//				int maxJobDefinitionCount = licenseManager.getMaxJobDefinitionCount();
+//				if(maxJobDefinitionCount != 0 && jobDefinitionCount >= maxJobDefinitionCount){
+//					throw logAndMakeSchedulerException("main.jobdef.maxcount.error", null, jobDefinitionCount, maxJobDefinitionCount);
+//				}
+//			}
+//			
+//			sqlMapClient.startTransaction();
+//			if ("add".equalsIgnoreCase(jobdef.getReqType())) {
+//				jobdef.setCreateTime(Util.getCurrentYYYYMMDDHHMMSS()); // 승인일이 등록일.
+//				actionOk = jobDefinitionManager.insertJobDefinition(jobdef) > 0;
+//				
+//			}else if ("edit".equalsIgnoreCase(jobdef.getReqType())) {
+//				actionOk = jobDefinitionManager.updateJobDefinition(jobdef) > 0;
+//				
+//			}else if ("delete".equalsIgnoreCase(jobdef.getReqType())) {
+//				actionOk = jobDefinitionManager.deleteJobDefinition(jobdef.getJobId()) > 0;
+//			}
+//			
+//			if (actionOk) {
+//				jobdef.setReqState("A"+Util.getCurrentYYYYMMDDHHMMSS());
+//				jobdef.setReqARReason(reqARReason);
+//				jobDefinitionStgManager.updateJobDefinitionStgReqInfo(jobdef);
+//			}
+//			
+//			sqlMapClient.commitTransaction();
+//			Util.logInfo(log, MSG.get("main.jobdefstg.approve", auth, jobdef.getReqNo(), jobdef.getJobId())); // [{0}] 에서 요청정보({0}), Job Id({1}) 의 요청을 승인했습니다
+//		}catch(SchedulerException e) {
+//			throw e;
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.jobdefstg.approve.error", auth, e, jobdef.getReqNo(), jobdef.getJobId()); // 요청번호({0}), Job Id({1})의 승인 중 에러가 발생하였습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception e) {
+//				e.printStackTrace(); // and ignore
+//			}
+//		}
+//	}
 	public void approveJobDefinitionStgToJobDefinition(String reqNo, String jobId, String reqARReason, AdminAuth auth) {
-		boolean actionOk=false;
-		JobDefinitionStg jobdef = null;
-		
-		try {
-			User user = userManager.getUser(auth.getOperatorId()); 
-			jobdef = jobDefinitionStgManager.getJobDefinitionStgDeep(reqNo, jobId);
-			userManager.checkOperationPermission(jobdef.getJobGroupId(), jobId, "approveJobDefinitionStgToJobDefinition", auth); // 권한 체크.
-			jobdef.setReqOperatorId(user.getId());
-			jobdef.setReqOperatorName(user.getName());
-			jobdef.setReqOperatorIp(auth.getOperatorIp());
-			if (!"Q".equals(jobdef.getReqState())) { // 상태가 요청이 아닌 경우는 에러. 
-				throw new SchedulerException("main.jobdefstg.state.not.q", reqNo); // {0}은 요청 상태가 아닙니다
-			}
-			
-			// license 체크
-			if("add".equalsIgnoreCase(jobdef.getReqType())){
-				int jobDefinitionCount = jobDefinitionManager.getJobDefinitionsCount();
-				int maxJobDefinitionCount = licenseManager.getMaxJobDefinitionCount();
-				if(maxJobDefinitionCount != 0 && jobDefinitionCount >= maxJobDefinitionCount){
-					throw logAndMakeSchedulerException("main.jobdef.maxcount.error", null, jobDefinitionCount, maxJobDefinitionCount);
-				}
-			}
-			
-			sqlMapClient.startTransaction();
-			if ("add".equalsIgnoreCase(jobdef.getReqType())) {
-				jobdef.setCreateTime(Util.getCurrentYYYYMMDDHHMMSS()); // 승인일이 등록일.
-				actionOk = jobDefinitionManager.insertJobDefinition(jobdef) > 0;
-				
-			}else if ("edit".equalsIgnoreCase(jobdef.getReqType())) {
-				actionOk = jobDefinitionManager.updateJobDefinition(jobdef) > 0;
-				
-			}else if ("delete".equalsIgnoreCase(jobdef.getReqType())) {
-				actionOk = jobDefinitionManager.deleteJobDefinition(jobdef.getJobId()) > 0;
-			}
-			
-			if (actionOk) {
-				jobdef.setReqState("A"+Util.getCurrentYYYYMMDDHHMMSS());
-				jobdef.setReqARReason(reqARReason);
-				jobDefinitionStgManager.updateJobDefinitionStgReqInfo(jobdef);
-			}
-			
-			sqlMapClient.commitTransaction();
-			Util.logInfo(log, MSG.get("main.jobdefstg.approve", auth, jobdef.getReqNo(), jobdef.getJobId())); // [{0}] 에서 요청정보({0}), Job Id({1}) 의 요청을 승인했습니다
-		}catch(SchedulerException e) {
-			throw e;
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.jobdefstg.approve.error", auth, e, jobdef.getReqNo(), jobdef.getJobId()); // 요청번호({0}), Job Id({1})의 승인 중 에러가 발생하였습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception e) {
-				e.printStackTrace(); // and ignore
-			}
-		}
-	}
-	
-	public void rejectJobDefinitionStgToJobDefinition(String reqNo, String jobId, String reqARReason, AdminAuth auth) {
-		JobDefinitionStg jobdef = null;
-		try {
-			User user = userManager.getUser(auth.getOperatorId()); 
-			jobdef = jobDefinitionStgManager.getJobDefinitionStg(reqNo, jobId);
-			userManager.checkOperationPermission(jobdef.getJobGroupId(), jobId, "rejectJobDefinitionStgToJobDefinition", auth); // 권한 체크.
-			if (!"Q".equals(jobdef.getReqState())) { // 상태가 요청이 아닌 경우는 에러. 
-				throw new SchedulerException("main.jobdefstg.state.not.q", reqNo); // {0}은 요청 상태가 아닙니다
-			}
-			jobdef.setReqState("R"+Util.getCurrentYYYYMMDDHHMMSS());
-			jobdef.setReqARReason(reqARReason);
-			jobdef.setReqOperatorId(user.getId());
-			jobdef.setReqOperatorName(user.getName());
-			jobdef.setReqOperatorIp(auth.getOperatorIp());
+	    boolean actionOk = false;
+	    JobDefinitionStg jobdef = null;
 
-			sqlMapClient.startTransaction();
-			jobDefinitionStgManager.updateJobDefinitionStgReqInfo(jobdef);
-			sqlMapClient.commitTransaction();
-			Util.logInfo(log, MSG.get("main.jobdefstg.reject", auth, jobdef.getReqNo(), jobdef.getJobId())); // [{0}] 에서 요청정보({0}), Job Id({1}) 의 요청을 반려하였습니다.
-		}catch(SchedulerException e) {
-			throw e;
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.jobdefstg.reject.error", auth, e, jobdef.getReqNo(), jobdef.getJobId()); // 요청번호({0}), Job Id({1})의 반려 중 에러가 발생하였습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception e) {
-				e.printStackTrace(); // and ignore
-			}
-		}
-	}		
+	    try {
+	        User user = userManager.getUser(auth.getOperatorId());
+	        jobdef = jobDefinitionStgManager.getJobDefinitionStgDeep(reqNo, jobId);
+	        userManager.checkOperationPermission(jobdef.getJobGroupId(), jobId, "approveJobDefinitionStgToJobDefinition", auth); // 권한 체크.
+	        jobdef.setReqOperatorId(user.getId());
+	        jobdef.setReqOperatorName(user.getName());
+	        jobdef.setReqOperatorIp(auth.getOperatorIp());
+
+	        if (!"Q".equals(jobdef.getReqState())) { // 상태가 요청이 아닌 경우는 에러.
+	            throw new SchedulerException("main.jobdefstg.state.not.q", reqNo); // {0}은 요청 상태가 아닙니다
+	        }
+
+	        // license 체크
+	        if ("add".equalsIgnoreCase(jobdef.getReqType())) {
+	            int jobDefinitionCount = jobDefinitionManager.getJobDefinitionsCount();
+	            int maxJobDefinitionCount = licenseManager.getMaxJobDefinitionCount();
+	            if (maxJobDefinitionCount != 0 && jobDefinitionCount >= maxJobDefinitionCount) {
+	                throw logAndMakeSchedulerException("main.jobdef.maxcount.error", null, jobDefinitionCount, maxJobDefinitionCount);
+	            }
+	        }
+
+	        try (SqlSession session = sqlSessionFactory.openSession(false)) { // 트랜잭션 비자동 모드
+	            if ("add".equalsIgnoreCase(jobdef.getReqType())) {
+	                jobdef.setCreateTime(Util.getCurrentYYYYMMDDHHMMSS()); // 승인일이 등록일.
+	                actionOk = jobDefinitionManager.insertJobDefinition(jobdef) > 0;
+	            } else if ("edit".equalsIgnoreCase(jobdef.getReqType())) {
+	                actionOk = jobDefinitionManager.updateJobDefinition(jobdef) > 0;
+	            } else if ("delete".equalsIgnoreCase(jobdef.getReqType())) {
+	                actionOk = jobDefinitionManager.deleteJobDefinition(jobdef.getJobId()) > 0;
+	            }
+
+	            if (actionOk) {
+	                jobdef.setReqState("A" + Util.getCurrentYYYYMMDDHHMMSS());
+	                jobdef.setReqARReason(reqARReason);
+	                jobDefinitionStgManager.updateJobDefinitionStgReqInfo(jobdef);
+	            }
+
+	            session.commit(); // 커밋
+	            Util.logInfo(log, MSG.get("main.jobdefstg.approve", auth, jobdef.getReqNo(), jobdef.getJobId())); // [{0}]에서 요청정보({0}), Job Id({1}) 의 요청을 승인했습니다
+	        }
+	    } catch (SchedulerException e) {
+	        throw e;
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.jobdefstg.approve.error", auth, e, jobdef.getReqNo(), jobdef.getJobId()); // 요청번호({0}), Job Id({1})의 승인 중 에러가 발생하였습니다
+	    }
+	}
+
+	
+//	public void rejectJobDefinitionStgToJobDefinition(String reqNo, String jobId, String reqARReason, AdminAuth auth) {
+//		JobDefinitionStg jobdef = null;
+//		try {
+//			User user = userManager.getUser(auth.getOperatorId()); 
+//			jobdef = jobDefinitionStgManager.getJobDefinitionStg(reqNo, jobId);
+//			userManager.checkOperationPermission(jobdef.getJobGroupId(), jobId, "rejectJobDefinitionStgToJobDefinition", auth); // 권한 체크.
+//			if (!"Q".equals(jobdef.getReqState())) { // 상태가 요청이 아닌 경우는 에러. 
+//				throw new SchedulerException("main.jobdefstg.state.not.q", reqNo); // {0}은 요청 상태가 아닙니다
+//			}
+//			jobdef.setReqState("R"+Util.getCurrentYYYYMMDDHHMMSS());
+//			jobdef.setReqARReason(reqARReason);
+//			jobdef.setReqOperatorId(user.getId());
+//			jobdef.setReqOperatorName(user.getName());
+//			jobdef.setReqOperatorIp(auth.getOperatorIp());
+//
+//			sqlMapClient.startTransaction();
+//			jobDefinitionStgManager.updateJobDefinitionStgReqInfo(jobdef);
+//			sqlMapClient.commitTransaction();
+//			Util.logInfo(log, MSG.get("main.jobdefstg.reject", auth, jobdef.getReqNo(), jobdef.getJobId())); // [{0}] 에서 요청정보({0}), Job Id({1}) 의 요청을 반려하였습니다.
+//		}catch(SchedulerException e) {
+//			throw e;
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.jobdefstg.reject.error", auth, e, jobdef.getReqNo(), jobdef.getJobId()); // 요청번호({0}), Job Id({1})의 반려 중 에러가 발생하였습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception e) {
+//				e.printStackTrace(); // and ignore
+//			}
+//		}
+//	}		
+	public void rejectJobDefinitionStgToJobDefinition(String reqNo, String jobId, String reqARReason, AdminAuth auth) {
+	    JobDefinitionStg jobdef = null;
+	    try {
+	        User user = userManager.getUser(auth.getOperatorId());
+	        jobdef = jobDefinitionStgManager.getJobDefinitionStg(reqNo, jobId);
+	        userManager.checkOperationPermission(jobdef.getJobGroupId(), jobId, "rejectJobDefinitionStgToJobDefinition", auth); // 권한 체크.
+
+	        if (!"Q".equals(jobdef.getReqState())) { // 상태가 요청이 아닌 경우는 에러.
+	            throw new SchedulerException("main.jobdefstg.state.not.q", reqNo); // {0}은 요청 상태가 아닙니다
+	        }
+
+	        // 요청 상태 반려 처리
+	        jobdef.setReqState("R" + Util.getCurrentYYYYMMDDHHMMSS());
+	        jobdef.setReqARReason(reqARReason);
+	        jobdef.setReqOperatorId(user.getId());
+	        jobdef.setReqOperatorName(user.getName());
+	        jobdef.setReqOperatorIp(auth.getOperatorIp());
+
+	        // MyBatis 트랜잭션 관리
+	        try (SqlSession session = sqlSessionFactory.openSession(false)) { // 트랜잭션 비자동 모드
+	            jobDefinitionStgManager.updateJobDefinitionStgReqInfo(jobdef);
+	            session.commit(); // 트랜잭션 커밋
+	            Util.logInfo(log, MSG.get("main.jobdefstg.reject", auth, jobdef.getReqNo(), jobdef.getJobId())); // [{0}]에서 요청정보({0}), Job Id({1}) 의 요청을 반려하였습니다
+	        }
+
+	    } catch (SchedulerException e) {
+	        throw e;
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.jobdefstg.reject.error", auth, e, jobdef.getReqNo(), jobdef.getJobId()); // 요청번호({0}), Job Id({1})의 반려 중 에러가 발생하였습니다
+	    }
+	}
 	
 	/**
 	 * 등록요청 취소
@@ -2353,23 +2750,38 @@ public class ControllerMain {
 	 * @param auth
 	 * @return 성공
 	 */
+//	public boolean deleteJobDefinitionStg(String reqNo, AdminAuth auth) {
+//		try {
+//			sqlMapClient.startTransaction();
+//			int cnt = jobDefinitionStgManager.deleteJobDefinitionStg(reqNo);
+//			sqlMapClient.commitTransaction();
+//			Util.logInfo(log, MSG.get("main.jobdefstg.delete", auth, reqNo)); // [{0}] 에서 요청번호({1}) 의 요청을 취소합니다
+//			return cnt > 0;
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.jobdefstg.delete.error", auth, e, reqNo); // 요청번호({0}) 의 요청을 취소하는 중 에러가 발생하였습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception e) {
+//				e.printStackTrace(); // and ignore
+//			}
+//		}
+//	}
 	public boolean deleteJobDefinitionStg(String reqNo, AdminAuth auth) {
-		try {
-			sqlMapClient.startTransaction();
-			int cnt = jobDefinitionStgManager.deleteJobDefinitionStg(reqNo);
-			sqlMapClient.commitTransaction();
-			Util.logInfo(log, MSG.get("main.jobdefstg.delete", auth, reqNo)); // [{0}] 에서 요청번호({1}) 의 요청을 취소합니다
-			return cnt > 0;
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.jobdefstg.delete.error", auth, e, reqNo); // 요청번호({0}) 의 요청을 취소하는 중 에러가 발생하였습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception e) {
-				e.printStackTrace(); // and ignore
-			}
-		}
+	    try {
+	        // MyBatis 세션 시작 (트랜잭션 비자동 모드)
+	        try (SqlSession session = sqlSessionFactory.openSession(false)) {
+	            int cnt = jobDefinitionStgManager.deleteJobDefinitionStg(reqNo);
+	            session.commit(); // 트랜잭션 커밋
+
+	            Util.logInfo(log, MSG.get("main.jobdefstg.delete", auth, reqNo)); // [{0}] 에서 요청번호({1}) 의 요청을 취소합니다
+	            return cnt > 0;
+	        }
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.jobdefstg.delete.error", auth, e, reqNo); // 요청번호({0}) 의 요청을 취소하는 중 에러가 발생하였습니다
+	    }
 	}
+
 
 
 	/**
@@ -2563,40 +2975,80 @@ public class ControllerMain {
 	 * @param auth
 	 * @return
 	 */
+//	public boolean setJobInstanceLogLevel(String jobInstanceId, String logLevel, AdminAuth auth) {
+//		try {
+//			userManager.checkOperationPermission(
+//				jobInstanceManager.getJobGroupId(jobInstanceId), 
+//				jobInstanceIdMap.getJobId(jobInstanceId), "setJobInstanceLogLevel", auth); // 권한 체크.
+//			sqlMapClient.startTransaction();
+//			int cnt = jobInstanceManager.updateJobInstanceLogLevel(jobInstanceId, logLevel);
+//			
+//			// agent 의 Job LogLevel Update.
+//			JobExecution jobexe = runningJobStateMonitor.getRunningJobExecutionByJobInsId(jobInstanceId);
+//			if (jobexe != null) { // 현재 실행중인 경우
+//				IAgentClient agent = getAgentClient(jobexe.getAgentNode());
+//				boolean ok = agent.setJobExecutionLogLevel(jobexe.getJobExecutionId(), logLevel);
+//				if (!ok) {
+//					// 로그레벨 변경 실패. (Job 이 End 됐거나, peer 의 internal 에서 실행중이거나)
+//					if (agentInfoManager.isInternalAgent(jobexe.getAgentNode())) { // internal 인 경우는 peer 에도 set 해본다. false 리턴하더라도 그냥 정상 리턴해라.
+//						peerClient.setInternalJobExecutionLogLevel(jobexe.getAgentNode(), jobexe.getJobExecutionId(), logLevel);
+//					}
+//				}
+//			}
+//			sqlMapClient.commitTransaction();
+//			Util.logInfo(log, MSG.get("main.jobctl.change.loglevel", auth, jobInstanceId, logLevel)); // [{0}] 에서 {1} 의 로그 레벨을 {2} 로 변경합니다
+//			return cnt == 1;
+//		}catch(SchedulerException e) {
+//			throw e;
+//		}catch(Exception e) {
+//			throw logAndMakeSchedulerException("main.jobctl.change.loglevel.error", auth, e, jobInstanceId, 3); // {0} 의 로그 레벨을 {2} 로 변경하는 중 에러가 발생하였습니다
+//		}finally {
+//			try {
+//				sqlMapClient.endTransaction();
+//			}catch(Exception ignore){
+//			}
+//		}
+//	}
 	public boolean setJobInstanceLogLevel(String jobInstanceId, String logLevel, AdminAuth auth) {
-		try {
-			userManager.checkOperationPermission(
-				jobInstanceManager.getJobGroupId(jobInstanceId), 
-				jobInstanceIdMap.getJobId(jobInstanceId), "setJobInstanceLogLevel", auth); // 권한 체크.
-			sqlMapClient.startTransaction();
-			int cnt = jobInstanceManager.updateJobInstanceLogLevel(jobInstanceId, logLevel);
-			
-			// agent 의 Job LogLevel Update.
-			JobExecution jobexe = runningJobStateMonitor.getRunningJobExecutionByJobInsId(jobInstanceId);
-			if (jobexe != null) { // 현재 실행중인 경우
-				IAgentClient agent = getAgentClient(jobexe.getAgentNode());
-				boolean ok = agent.setJobExecutionLogLevel(jobexe.getJobExecutionId(), logLevel);
-				if (!ok) {
-					// 로그레벨 변경 실패. (Job 이 End 됐거나, peer 의 internal 에서 실행중이거나)
-					if (agentInfoManager.isInternalAgent(jobexe.getAgentNode())) { // internal 인 경우는 peer 에도 set 해본다. false 리턴하더라도 그냥 정상 리턴해라.
-						peerClient.setInternalJobExecutionLogLevel(jobexe.getAgentNode(), jobexe.getJobExecutionId(), logLevel);
-					}
-				}
-			}
-			sqlMapClient.commitTransaction();
-			Util.logInfo(log, MSG.get("main.jobctl.change.loglevel", auth, jobInstanceId, logLevel)); // [{0}] 에서 {1} 의 로그 레벨을 {2} 로 변경합니다
-			return cnt == 1;
-		}catch(SchedulerException e) {
-			throw e;
-		}catch(Exception e) {
-			throw logAndMakeSchedulerException("main.jobctl.change.loglevel.error", auth, e, jobInstanceId, 3); // {0} 의 로그 레벨을 {2} 로 변경하는 중 에러가 발생하였습니다
-		}finally {
-			try {
-				sqlMapClient.endTransaction();
-			}catch(Exception ignore){
-			}
-		}
+	    try {
+	        // 권한 체크
+	        userManager.checkOperationPermission(
+	            jobInstanceManager.getJobGroupId(jobInstanceId), 
+	            jobInstanceIdMap.getJobId(jobInstanceId), "setJobInstanceLogLevel", auth);
+
+	        // MyBatis 세션 시작 (트랜잭션 비자동 모드)
+	        try (SqlSession session = sqlSessionFactory.openSession(false)) {
+	            // 로그 레벨 업데이트
+	            int cnt = jobInstanceManager.updateJobInstanceLogLevel(jobInstanceId, logLevel);
+
+	            // agent 의 Job LogLevel Update.
+	            JobExecution jobexe = runningJobStateMonitor.getRunningJobExecutionByJobInsId(jobInstanceId);
+	            if (jobexe != null) { // 현재 실행중인 경우
+	                IAgentClient agent = getAgentClient(jobexe.getAgentNode());
+	                boolean ok = agent.setJobExecutionLogLevel(jobexe.getJobExecutionId(), logLevel);
+	                if (!ok) {
+	                    // 로그레벨 변경 실패 (Job이 End 됐거나, peer의 internal에서 실행중일 경우)
+	                    if (agentInfoManager.isInternalAgent(jobexe.getAgentNode())) { // internal인 경우는 peer에도 set
+	                        peerClient.setInternalJobExecutionLogLevel(jobexe.getAgentNode(), jobexe.getJobExecutionId(), logLevel);
+	                    }
+	                }
+	            }
+
+	            // 트랜잭션 커밋
+	            session.commit();
+
+	            // 로그 기록
+	            Util.logInfo(log, MSG.get("main.jobctl.change.loglevel", auth, jobInstanceId, logLevel)); // [{0}]에서 {1}의 로그 레벨을 {2}로 변경합니다
+
+	            return cnt == 1; // 업데이트 성공 여부 리턴
+	        }
+	    } catch (SchedulerException e) {
+	        throw e;
+	    } catch (Exception e) {
+	        throw logAndMakeSchedulerException("main.jobctl.change.loglevel.error", auth, e, jobInstanceId, 3); // {0}의 로그 레벨을 {2}로 변경하는 중 에러가 발생하였습니다
+	    }
 	}
+
 	
 	/**
 	 * 로그 레벨 변경. JobDefinition 의 로그레벨을 변경하면, 그후 activation 되는 JobInstance에 영향을 준다.

@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+//import org.apache.ibatis.session.ResultHandler;
 import nexcore.scheduler.util.ByteArray;
-
+import org.apache.ibatis.session.ResultHandler;
 
 /**
  * <ul>
@@ -197,7 +198,8 @@ public interface IControllerService {
 	 * @param queryParamMap
 	 * @param rowHandler
 	 */
-	public void getJobInstanceListWithRowHandler(Map queryParamMap, Object rowHandler);
+	//public void getJobInstanceListWithRowHandler(Map queryParamMap, Object rowHandler);
+	public void getJobInstanceListWithRowHandler(Map<String, Object> queryParamMap, ResultHandler<JobInstance> rowHandler);
 
 	/**
 	 * 필요한 컬럼만 조회한다. ($columnList$ 에 컬럼 목록 담는다)
@@ -206,8 +208,9 @@ public interface IControllerService {
 	 * @param queryParamMap
 	 * @param rowHandler
 	 */
-	public void getJobInstanceListFreeColumnWithRowHandler(Map queryParamMap, Object rowHandler);
-	
+	//public void getJobInstanceListFreeColumnWithRowHandler(Map queryParamMap, Object rowHandler);
+	public void getJobInstanceListFreeColumnWithRowHandler(Map<String, Object> queryParamMap, ResultHandler<JobInstance> rowHandler);
+
 	/**
 	 * 필요한 컬럼만 조회한다. ($columnList$ 에 컬럼 목록 담는다)
 	 * $queryCondition$ 방식이 아닌 ibatis dynamic 태그를 이용한 쿼리. 
@@ -558,7 +561,9 @@ public interface IControllerService {
 	 */
 	public List<JobDefinitionStg> getJobDefinitionStgList(String queryCondition, boolean deep);
 
-	public void getJobDefinitionStgListWithRH(String queryCondition, Object rowHandler);
+	//public void getJobDefinitionStgListWithRH(String queryCondition, Object rowHandler);
+//	public void getJobDefinitionStgListWithRH(String queryCondition, ResultHandler<JobDefinitionStg> rowHandler) ;
+    public void getJobDefinitionStgListWithRH(String queryCondition, ResultHandler<JobDefinitionStg> rowHandler);
 
 	/**
 	 * JobDefinition 변경/신규/삭제 요청 조회

@@ -23,6 +23,8 @@ import nexcore.scheduler.entity.JobLogFileLocation;
 import nexcore.scheduler.entity.ParallelGroup;
 import nexcore.scheduler.util.ByteArray;
 import nexcore.scheduler.util.Util;
+
+import org.apache.ibatis.session.ResultHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -207,10 +209,12 @@ public class ControllerServiceImpl implements IControllerService {
 	 * @param queryParamMap
 	 * @param rowHandler
 	 */
-	public void getJobInstanceListWithRowHandler(Map queryParamMap, Object rowHandler) {
-		controllerMain.getJobInstanceListByDynamicQueryWithRowHandler(queryParamMap, rowHandler);
+//	public void getJobInstanceListWithRowHandler(Map queryParamMap, Object rowHandler) {
+//		controllerMain.getJobInstanceListByDynamicQueryWithRowHandler(queryParamMap, rowHandler);
+//	}
+	public void getJobInstanceListWithRowHandler(Map<String, Object> queryParamMap, ResultHandler<JobInstance> rowHandler) {
+	    controllerMain.getJobInstanceListByDynamicQueryWithRowHandler(queryParamMap, rowHandler);
 	}
-	
 	/**
 	 * 필요한 컬럼만 조회한다. ($columnList$ 에 컬럼 목록 담는다)
 	 * iBATIS 의 RowHandler 를 이용하여 대랑 JobInstance 조회를 함.
@@ -218,10 +222,13 @@ public class ControllerServiceImpl implements IControllerService {
 	 * @param queryParamMap
 	 * @param rowHandler
 	 */
-	public void getJobInstanceListFreeColumnWithRowHandler(Map queryParamMap, Object rowHandler) {
-		controllerMain.getJobInstanceListFreeColumnWithRowHandler(queryParamMap, rowHandler);
+//	public void getJobInstanceListFreeColumnWithRowHandler(Map queryParamMap, Object rowHandler) {
+//		controllerMain.getJobInstanceListFreeColumnWithRowHandler(queryParamMap, rowHandler);
+//	}
+	public void getJobInstanceListFreeColumnWithRowHandler(Map<String, Object> queryParamMap, ResultHandler<JobInstance> rowHandler) {
+	    controllerMain.getJobInstanceListFreeColumnWithRowHandler(queryParamMap, rowHandler);
 	}
-	
+
 	/**
 	 * 필요한 컬럼만 조회한다. ($columnList$ 에 컬럼 목록 담는다)
 	 * $queryCondition$ 방식이 아닌 ibatis dynamic 태그를 이용한 쿼리. 
@@ -599,8 +606,12 @@ public class ControllerServiceImpl implements IControllerService {
 		return controllerMain.getJobDefinitionStgList(queryCondition, deep);
 	}
 
-	public void getJobDefinitionStgListWithRH(String queryCondition, Object rowHandler) {
-		controllerMain.getJobDefinitionStgListWithRH(queryCondition, rowHandler);
+//	public void getJobDefinitionStgListWithRH(String queryCondition, Object rowHandler) {
+//		controllerMain.getJobDefinitionStgListWithRH(queryCondition, rowHandler);
+//	}
+//	
+	public void getJobDefinitionStgListWithRH(String queryCondition, ResultHandler<JobDefinitionStg> rowHandler) {
+	    controllerMain.getJobDefinitionStgListWithRH(queryCondition, rowHandler);
 	}
 
 	/**

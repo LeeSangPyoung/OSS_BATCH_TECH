@@ -1,45 +1,44 @@
 package nexcore.scheduler.config;
 
+import javax.sql.DataSource;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.apache.ibatis.datasource.pooled.PooledDataSource;
+import org.apache.ibatis.io.Resources;
 import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
-import javax.sql.DataSource;
+import java.io.IOException;
 
 @Configuration
 public class MyBatisConfig {
 
-    @Value("${db.driver}")
-    private String driver;
-
-    @Value("${db.url}")
-    private String url;
-
-    @Value("${db.username}")
-    private String username;
-
-    @Value("${db.password}")
-    private String password;
-
     @Bean
     public DataSource dataSource() {
-        return new PooledDataSource(driver, url, username, password);
+        return new PooledDataSource(
+            "org.postgresql.Driver",
+            "jdbc:postgresql://localhost:5432/nexcore",
+            "nexcore",
+            "password"
+        );
     }
 
     @Bean
     public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
-        SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
-        sessionFactory.setDataSource(dataSource);
-        return sessionFactory.getObject();
+        SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+        factoryBean.setDataSource(dataSource);
+        factoryBean.setMapperLocations(
+            new PathMatchingResourcePatternResolver().getResources("classpath:mappers/*.xml")
+        );
+        return factoryBean.getObject();
     }
 
     @Bean
     public SqlSession sqlSession(SqlSessionFactory sqlSessionFactory) {
-        return sqlSessionFactory.openSession();
+        return new SqlSessionTemplate(sqlSessionFactory);
     }
 }

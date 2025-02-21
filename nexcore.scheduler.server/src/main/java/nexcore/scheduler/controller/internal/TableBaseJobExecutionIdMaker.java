@@ -29,6 +29,7 @@ public class TableBaseJobExecutionIdMaker implements IJobExecutionIdMaker {
 	private TableBaseIdGenerator    tableBaseIdGenerator;
 	
 	public void init() {
+	    this.sqlSession = sqlSessionFactory.openSession();  // ✅ sqlSessionFactory에서 세션을 가져옴
 		if (retryCount==0) {
 			tableBaseIdGenerator = new TableBaseIdGenerator("JE", sqlSession);
 		}else {
@@ -46,12 +47,12 @@ public class TableBaseJobExecutionIdMaker implements IJobExecutionIdMaker {
 	 * sqlMapClient; }
 	 */
 	
-	public SqlSession getSqlMapClient() {
-		return sqlSession;
+	public SqlSessionFactory getSqlSessionFactory() {
+		return sqlSessionFactory;
 	}
 
-	public void setSqlMapClient(SqlSession sqlSession) {
-		this.sqlSession = sqlSession;
+	public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+		this.sqlSessionFactory = sqlSessionFactory;
 	}
 
 	public int getRetryCount() {

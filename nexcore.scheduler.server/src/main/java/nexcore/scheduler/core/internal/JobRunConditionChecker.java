@@ -2,6 +2,7 @@ package nexcore.scheduler.core.internal;
 
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -483,7 +484,10 @@ public class JobRunConditionChecker {
 		
 		for (PreJobCondition preJobCond : jobins.getPreJobConditions()) {
 			
-			List<Map> preJobInsList = jobInstanceManager.getJobInstancesStateByJobId(preJobCond.getPreJobId(), jobins.getProcDate()); // 2013.7.28. 쿼리 효율을 위해 필요한 컬럼만 조회하는 방식으로 변경
+			//List<Map> preJobInsList = jobInstanceManager.getJobInstancesStateByJobId(preJobCond.getPreJobId(), jobins.getProcDate()); // 2013.7.28. 쿼리 효율을 위해 필요한 컬럼만 조회하는 방식으로 변경
+			
+			List<Map<String, Object>> preJobInsList = jobInstanceManager.getJobInstancesStateByJobId(preJobCond.getPreJobId(), jobins.getProcDate());
+
 			// 동일 PROC_DATE, JOB ID 에 대해서 JOB Instance ID 가 여러 개일 경우는 모든 Job Instance 에 대해서 다 check 하면서 하나라도 만족하면 돌린다.
 			/*
 			 * Keys of map(preJobIns) is {"JOB_INSTANCE_ID", "JOB_ID", "JOB_STATE", "LAST_JOB_EXE_ID"}
@@ -508,20 +512,44 @@ public class JobRunConditionChecker {
 						PreJobCondition.ALLINS_END_OKFAIL.equals(preJobCond.getOkFail())) {
 					// 2013-06-03. 정호철. 다중 트리거로 구성된 환경에서 모든 CHILD 들이 다 끝나기를 기다리도록 선후행을 구성하기 위해. 인스턴스 전체의 END 상태를 체크함 
 					LinkedList<String> reasonSub = new LinkedList<String>();
-					for (Map<String, String> preJobIns : preJobInsList) {
-						String preJobInsState = getJobInsEndOkState(preJobIns.get("JOB_STATE"), preJobIns.get("LAST_JOB_EXE_ID"));
-						boolean oneInsCondOK = false;
-						if (PreJobCondition.ALLINS_END_OK.equals(preJobCond.getOkFail())) {
-							oneInsCondOK = JobInstance.JOB_STATE_ENDED_OK.equals(preJobInsState);
-						}else if (PreJobCondition.ALLINS_END_FAIL.equals(preJobCond.getOkFail())) {
-							oneInsCondOK = JobInstance.JOB_STATE_ENDED_FAIL.equals(preJobInsState);
-						}else if (PreJobCondition.ALLINS_END_OKFAIL.equals(preJobCond.getOkFail())) {
-							oneInsCondOK = JobInstance.JOB_STATE_ENDED_OK.equals(preJobInsState) || JobInstance.JOB_STATE_ENDED_FAIL.equals(preJobInsState);
-						}
-						
-						if (!oneInsCondOK) {
-							reasonSub.add(MSG.get("main.runcheck.prejobins.state", preJobIns.get("JOB_INSTANCE_ID"), JobInstance.getJobStateText(preJobInsState)));
-						}
+//					for (Map<String, String> preJobIns : preJobInsList) {
+//						String preJobInsState = getJobInsEndOkState(preJobIns.get("JOB_STATE"), preJobIns.get("LAST_JOB_EXE_ID"));
+//						boolean oneInsCondOK = false;
+//						if (PreJobCondition.ALLINS_END_OK.equals(preJobCond.getOkFail())) {
+//							oneInsCondOK = JobInstance.JOB_STATE_ENDED_OK.equals(preJobInsState);
+//						}else if (PreJobCondition.ALLINS_END_FAIL.equals(preJobCond.getOkFail())) {
+//							oneInsCondOK = JobInstance.JOB_STATE_ENDED_FAIL.equals(preJobInsState);
+//						}else if (PreJobCondition.ALLINS_END_OKFAIL.equals(preJobCond.getOkFail())) {
+//							oneInsCondOK = JobInstance.JOB_STATE_ENDED_OK.equals(preJobInsState) || JobInstance.JOB_STATE_ENDED_FAIL.equals(preJobInsState);
+//						}
+//						
+//						if (!oneInsCondOK) {
+//							reasonSub.add(MSG.get("main.runcheck.prejobins.state", preJobIns.get("JOB_INSTANCE_ID"), JobInstance.getJobStateText(preJobInsState)));
+//						}
+//					}
+					for (Map<String, Object> preJobInsObj : preJobInsList) {
+					    // Map<String, Object>를 Map<String, String>으로 변환
+					    Map<String, String> preJobIns = new HashMap<>();
+					    for (Map.Entry<String, Object> entry : preJobInsObj.entrySet()) {
+					        preJobIns.put(entry.getKey(), entry.getValue() == null ? null : entry.getValue().toString());
+					    }
+
+					    String preJobInsState = getJobInsEndOkState(preJobIns.get("JOB_STATE"), preJobIns.get("LAST_JOB_EXE_ID"));
+					    boolean oneInsCondOK = false;
+					    if (PreJobCondition.ALLINS_END_OK.equals(preJobCond.getOkFail())) {
+					        oneInsCondOK = JobInstance.JOB_STATE_ENDED_OK.equals(preJobInsState);
+					    } else if (PreJobCondition.ALLINS_END_FAIL.equals(preJobCond.getOkFail())) {
+					        oneInsCondOK = JobInstance.JOB_STATE_ENDED_FAIL.equals(preJobInsState);
+					    } else if (PreJobCondition.ALLINS_END_OKFAIL.equals(preJobCond.getOkFail())) {
+					        oneInsCondOK = JobInstance.JOB_STATE_ENDED_OK.equals(preJobInsState)
+					                || JobInstance.JOB_STATE_ENDED_FAIL.equals(preJobInsState);
+					    }
+
+					    if (!oneInsCondOK) {
+					        reasonSub.add(MSG.get("main.runcheck.prejobins.state",
+					                preJobIns.get("JOB_INSTANCE_ID"),
+					                JobInstance.getJobStateText(preJobInsState)));
+					    }
 					}
 					
 					if (reasonSub.size() > 0) { // 한 인스턴스라도 조건에 만족되지 않는 경우가 있다. 
@@ -532,26 +560,56 @@ public class JobRunConditionChecker {
 					}
 				}else {
 					LinkedList<String> reasonSub = new LinkedList<String>();
-					for (Map<String, String> preJobIns : preJobInsList) {
-						// 선행 Job 의 상태 체크.
-						String preJobInsState = getJobInsEndOkState(preJobIns.get("JOB_STATE"), preJobIns.get("LAST_JOB_EXE_ID"));
-						
-						// OK 로 설정되어있으면 ENDED-OK 인가 확인, FAIL로 설정되어있으면 ENDED-FAIL 인가 확인.
-						satisfyPreJobCondition = 
-							PreJobCondition.END_OK.equals(preJobCond.getOkFail()) || PreJobCondition.END_OK_OR_INS_NONE.equals(preJobCond.getOkFail()) 
-								? JobInstance.JOB_STATE_ENDED_OK.equals(preJobInsState) :
-							PreJobCondition.END_FAIL.equals(preJobCond.getOkFail()) || PreJobCondition.END_FAIL_OR_INS_NONE.equals(preJobCond.getOkFail()) 
-								? JobInstance.JOB_STATE_ENDED_FAIL.equals(preJobInsState) : 
-							PreJobCondition.END_OKFAIL.equals(preJobCond.getOkFail()) || PreJobCondition.END_OKFAIL_OR_INS_NONE.equals(preJobCond.getOkFail()) 
-								? JobInstance.JOB_STATE_ENDED_OK.equals(preJobInsState) || JobInstance.JOB_STATE_ENDED_FAIL.equals(preJobInsState) : false;
-								
-						if (satisfyPreJobCondition) {
-							break;  // Instance 중 하나가 조건에 만족하면...이 조건은 만족한걸로 본다. 따라서..다중 Instance 는 조심해서 챙겨야함
-						}else {
-							reasonSub.add(MSG.get("main.runcheck.prejobins.state", preJobIns.get("JOB_INSTANCE_ID"), JobInstance.getJobStateText(preJobInsState))); // 선행 {0} 의 상태 {1}
-						}
-					}
+//					for (Map<String, String> preJobIns : preJobInsList) {
+//						// 선행 Job 의 상태 체크.
+//						String preJobInsState = getJobInsEndOkState(preJobIns.get("JOB_STATE"), preJobIns.get("LAST_JOB_EXE_ID"));
+//						
+//						// OK 로 설정되어있으면 ENDED-OK 인가 확인, FAIL로 설정되어있으면 ENDED-FAIL 인가 확인.
+//						satisfyPreJobCondition = 
+//							PreJobCondition.END_OK.equals(preJobCond.getOkFail()) || PreJobCondition.END_OK_OR_INS_NONE.equals(preJobCond.getOkFail()) 
+//								? JobInstance.JOB_STATE_ENDED_OK.equals(preJobInsState) :
+//							PreJobCondition.END_FAIL.equals(preJobCond.getOkFail()) || PreJobCondition.END_FAIL_OR_INS_NONE.equals(preJobCond.getOkFail()) 
+//								? JobInstance.JOB_STATE_ENDED_FAIL.equals(preJobInsState) : 
+//							PreJobCondition.END_OKFAIL.equals(preJobCond.getOkFail()) || PreJobCondition.END_OKFAIL_OR_INS_NONE.equals(preJobCond.getOkFail()) 
+//								? JobInstance.JOB_STATE_ENDED_OK.equals(preJobInsState) || JobInstance.JOB_STATE_ENDED_FAIL.equals(preJobInsState) : false;
+//								
+//						if (satisfyPreJobCondition) {
+//							break;  // Instance 중 하나가 조건에 만족하면...이 조건은 만족한걸로 본다. 따라서..다중 Instance 는 조심해서 챙겨야함
+//						}else {
+//							reasonSub.add(MSG.get("main.runcheck.prejobins.state", preJobIns.get("JOB_INSTANCE_ID"), JobInstance.getJobStateText(preJobInsState))); // 선행 {0} 의 상태 {1}
+//						}
+//					}
+//					
 					
+					for (Map<String, Object> preJobInsObj : preJobInsList) {
+					    // Map<String, Object>를 Map<String, String>으로 변환
+					    Map<String, String> preJobIns = new HashMap<>();
+					    for (Map.Entry<String, Object> entry : preJobInsObj.entrySet()) {
+					        preJobIns.put(entry.getKey(), entry.getValue() == null ? null : entry.getValue().toString());
+					    }
+					    
+					    // 선행 Job 의 상태 체크.
+					    String preJobInsState = getJobInsEndOkState(preJobIns.get("JOB_STATE"), preJobIns.get("LAST_JOB_EXE_ID"));
+					    
+					    // OK 로 설정되어있으면 ENDED-OK 인가 확인, FAIL로 설정되어있으면 ENDED-FAIL 인가 확인.
+					    satisfyPreJobCondition = 
+					        PreJobCondition.END_OK.equals(preJobCond.getOkFail()) || PreJobCondition.END_OK_OR_INS_NONE.equals(preJobCond.getOkFail()) 
+					            ? JobInstance.JOB_STATE_ENDED_OK.equals(preJobInsState) :
+					        PreJobCondition.END_FAIL.equals(preJobCond.getOkFail()) || PreJobCondition.END_FAIL_OR_INS_NONE.equals(preJobCond.getOkFail()) 
+					            ? JobInstance.JOB_STATE_ENDED_FAIL.equals(preJobInsState) : 
+					        PreJobCondition.END_OKFAIL.equals(preJobCond.getOkFail()) || PreJobCondition.END_OKFAIL_OR_INS_NONE.equals(preJobCond.getOkFail()) 
+					            ? JobInstance.JOB_STATE_ENDED_OK.equals(preJobInsState) || JobInstance.JOB_STATE_ENDED_FAIL.equals(preJobInsState) 
+					            : false;
+					                                
+					    if (satisfyPreJobCondition) {
+					        break;  // Instance 중 하나가 조건에 만족하면, 조건 만족으로 봄.
+					    } else {
+					        reasonSub.add(MSG.get("main.runcheck.prejobins.state",
+					                preJobIns.get("JOB_INSTANCE_ID"),
+					                JobInstance.getJobStateText(preJobInsState)));
+					    }
+					}
+
 					if (!satisfyPreJobCondition) {
 						reason.addAll(reasonSub);
 					}

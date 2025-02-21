@@ -532,21 +532,34 @@ public class JobRunResultProcessor {
 	 * 
 	 * @param returnCode
 	 */
+//	public void awakePreJobWaitingInstances(String endedJobId, String procDate) throws SQLException {
+//		String[] waitingJobIds = preJobWaitingPool.getWaitingJobIdFor(endedJobId, procDate);
+//
+//		for (String waitingJobId : waitingJobIds) {
+//			// 동일 Job Id 로 여러개의 Instance 가 존재할때 이들 모두를 실행시킨다.
+//			List<Map> jobInstances = jobInstanceManager.getJobInstancesStateByJobId(waitingJobId, procDate);
+//
+//			// {"JOB_INSTANCE_ID", "JOB_ID", "JOB_STATE", "LAST_JOB_EXE_ID"}
+//
+//			for (Map jobins : jobInstances) {
+//				jobStarter.askToStart((String) jobins.get("JOB_INSTANCE_ID"));
+//			}
+//		}
+//	}
 	public void awakePreJobWaitingInstances(String endedJobId, String procDate) throws SQLException {
-		String[] waitingJobIds = preJobWaitingPool.getWaitingJobIdFor(endedJobId, procDate);
+	    String[] waitingJobIds = preJobWaitingPool.getWaitingJobIdFor(endedJobId, procDate);
 
-		for (String waitingJobId : waitingJobIds) {
-			// 동일 Job Id 로 여러개의 Instance 가 존재할때 이들 모두를 실행시킨다.
-			List<Map> jobInstances = jobInstanceManager.getJobInstancesStateByJobId(waitingJobId, procDate);
+	    for (String waitingJobId : waitingJobIds) {
+	        // 동일 Job Id 로 여러개의 Instance 가 존재할때 이들 모두를 실행시킨다.
+	        List<Map<String, Object>> jobInstances = jobInstanceManager.getJobInstancesStateByJobId(waitingJobId, procDate);
 
-			// {"JOB_INSTANCE_ID", "JOB_ID", "JOB_STATE", "LAST_JOB_EXE_ID"}
+	        // {"JOB_INSTANCE_ID", "JOB_ID", "JOB_STATE", "LAST_JOB_EXE_ID"}
 
-			for (Map jobins : jobInstances) {
-				jobStarter.askToStart((String) jobins.get("JOB_INSTANCE_ID"));
-			}
-		}
+	        for (Map<String, Object> jobins : jobInstances) {
+	            jobStarter.askToStart((String) jobins.get("JOB_INSTANCE_ID"));
+	        }
+	    }
 	}
-
 	/**
 	 * Parallel wait 대기중인 Job 들을 깨워 실행되도록 한다.
 	 * 

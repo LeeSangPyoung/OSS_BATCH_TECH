@@ -18,9 +18,11 @@ import nexcore.scheduler.util.DateUtil;
 import nexcore.scheduler.util.NRMIClientSocketFactory;
 import nexcore.scheduler.util.Util;
 
+import org.apache.ibatis.session.Configuration;
 //import com.ibatis.sqlmap.client.SqlMapClient;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 /**
  * <ul>
  * <li>업무 그룹명 : 금융 프레임워크</li>
@@ -35,6 +37,8 @@ import org.apache.ibatis.session.SqlSessionFactory;
 public class AgentInfoManager {
 	private SqlSession sqlSession;
 	private IAgentClient internalAgentClient;
+	@Autowired
+	private SqlSessionFactory sqlSessionFactory; // ✅ Spring에서 주입
 
 	private Map<String, AgentInfo> cache = new ConcurrentHashMap<String, AgentInfo>();
 	private Map<String, IAgentClient> agentClientMap = new ConcurrentHashMap<String, IAgentClient>();
@@ -52,9 +56,15 @@ public class AgentInfoManager {
 		return sqlSession;
 	}
 
-	public void setSqlMapClient(SqlSession sqlSession) {
-		this.sqlSession = sqlSession;
-	}
+	/*
+	 * public void setSqlMapClient(SqlSession sqlSession) { this.sqlSession =
+	 * sqlSession; }
+	 */
+	
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.sqlSession = sqlSessionFactory.openSession(); // ✅ setter에서 세션 초기화
+    }
 
 	public IAgentClient getInternalAgentClient() {
 		return internalAgentClient;
@@ -91,7 +101,16 @@ public class AgentInfoManager {
 	    Map<String, Object> m = new HashMap<>();
 	    m.put("queryCondition", query);
 	    m.put("orderBy", orderBy);
-	    return sqlSession.selectList("nbs.monitor.selectAgentInfoByQuery", m);
+	    System.out.println("gogogogogogogogo!j");
+	    Configuration configuration = sqlSessionFactory.getConfiguration();
+        System.out.println("📌 현재 등록된 MyBatis Mapped Statements:");
+        for (String statement : configuration.getMappedStatementNames()) {
+            System.out.println("✅ " + statement);
+        }
+	    try (SqlSession session = sqlSessionFactory.openSession()) {
+	        return session.selectList("nbs.monitor.selectAgentInfoByQuery", m);
+	    }
+	    // return sqlSession.selectList("nbs.monitor.selectAgentInfoByQuery", m);
 	}
 
 //	private int selectAgentInfoCountByQuery(String query) throws SQLException {

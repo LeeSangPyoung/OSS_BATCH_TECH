@@ -17,6 +17,8 @@ import org.apache.ibatis.session.SqlSession;
 //import com.ibatis.sqlmap.client.SqlMapClient;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import nexcore.scheduler.entity.JobExecution;
 import nexcore.scheduler.entity.JobNotify;
 import nexcore.scheduler.entity.JobNotifyReceiver;
@@ -42,6 +44,8 @@ import nexcore.scheduler.util.Util;
 public class JobNotifyManager {
 	//private SqlMapClient                  sqlMapClient;
 	private SqlSession sqlSession;
+	@Autowired
+	private SqlSessionFactory sqlSessionFactory; // ✅ Spring에서 주입
 
 	private List<IJobEndNotifyProcessor>  notifyProcessors;
 
@@ -68,9 +72,13 @@ public class JobNotifyManager {
 		return sqlSession;
 	}
 
-	public void setSqlMapClient(SqlSession sqlSession) {
-		this.sqlSession = sqlSession;
-	}
+//	public void setSqlMapClient(SqlSession sqlSession) {
+//		this.sqlSession = sqlSession;
+//	}
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.sqlSession = sqlSessionFactory.openSession(); // ✅ setter에서 세션 초기화
+    }
 
 	public List<IJobEndNotifyProcessor> getNotifyProcessors() {
 		return notifyProcessors;

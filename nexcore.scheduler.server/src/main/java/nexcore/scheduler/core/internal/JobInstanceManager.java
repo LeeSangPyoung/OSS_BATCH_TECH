@@ -61,6 +61,10 @@ public class JobInstanceManager {
 	public void setSqlMapClient(SqlSession sqlSession) {
 		this.sqlSession = sqlSession;
 	}
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.sqlSession = sqlSessionFactory.openSession(); // ✅ setter에서 세션 초기화
+    }
 
 	/**
 	 * DB로 부터 Job Instance 객체 정보를 모두 새로 읽음.
@@ -287,7 +291,7 @@ public class JobInstanceManager {
 	 * return (List<Map>)sqlMapClient.queryForList(
 	 * "nbs.scheduler.selectJobInstancesFreeColumnByDynamicQuery", param); }
 	 */
-	private List<Map<String, Object>> getJobInstancesStateByJobId(String jobId, String procDate) throws SQLException {
+	public List<Map<String, Object>> getJobInstancesStateByJobId(String jobId, String procDate) throws SQLException {
 		Map<String, Object> param = new HashMap<>();
 		param.put("columnList", "JOB_INSTANCE_ID, JOB_ID, JOB_STATE, LAST_JOB_EXE_ID");
 		param.put("jobInstanceIdLike", jobId + procDate + "%");
@@ -655,7 +659,7 @@ public class JobInstanceManager {
 	 * sqlMapClient.queryForObject("nbs.scheduler.selectLastJobInstanceId", param);
 	 * }
 	 */
-	private String getLastJobInstanceId(String jobId, String procDate) throws SQLException {
+	public String getLastJobInstanceId(String jobId, String procDate) throws SQLException {
 		Map<String, Object> param = new HashMap<>();
 		param.put("jobId", jobId);
 		param.put("procDate", procDate);
@@ -776,7 +780,7 @@ public class JobInstanceManager {
 	 * sqlMapClient.update("nbs.scheduler.insertJobInsParam", map); }
 	 */
 
-	private void insertParameter(JobInstance jobins) throws SQLException {
+	public void insertParameter(JobInstance jobins) throws SQLException {
 		Map<String, Object> map = new HashMap<>();
 		map.put("jobInstanceId", jobins.getJobInstanceId());
 		map.put("xml", XmlUtil.toXml(jobins.getInParameters()));
@@ -821,7 +825,7 @@ public class JobInstanceManager {
 	 * return cnt; }
 	 */
 
-	private int updateJobInstance(JobInstance jobins) throws SQLException {
+	public int updateJobInstance(JobInstance jobins) throws SQLException {
 		// NBS_JOB_INS 테이블 update
 		setLastModifyTime(jobins);
 		JobInstance beforeJobins = getJobInstanceDeep(jobins.getJobInstanceId());
@@ -912,7 +916,7 @@ public class JobInstanceManager {
 	 * sqlMapClient.delete("nbs.scheduler.deleteJobInsParam",
 	 * jobins.getJobInstanceId()); }
 	 */
-	private int deleteParameter(JobInstance jobins) throws SQLException {
+	public int deleteParameter(JobInstance jobins) throws SQLException {
 		try (SqlSession session = sqlSessionFactory.openSession()) {
 			int cnt = session.delete("nbs.scheduler.deleteJobInsParam", jobins.getJobInstanceId());
 			session.commit(); // ✅ MyBatis에서는 수동 commit 필요
@@ -1028,7 +1032,7 @@ public class JobInstanceManager {
 	 * logJobStateChange(jobInstanceId, beforeState, newState, reason); return true;
 	 * } else { return false; } }
 	 */
-	private boolean setJobStateForEnd(String jobInstanceId, boolean isEndedOK, String reason, long endTime,
+	public boolean setJobStateForEnd(String jobInstanceId, boolean isEndedOK, String reason, long endTime,
             boolean forcedEndOkManually, String beforeState, String lastJobExeId) throws SQLException {
 		String newState = isEndedOK ? JobInstance.JOB_STATE_ENDED_OK : JobInstance.JOB_STATE_ENDED_FAIL;
 		Map<String, Object> param = new HashMap<>();
@@ -1248,7 +1252,7 @@ public class JobInstanceManager {
 	 * jobInstanceId); return
 	 * sqlMapClient.update("nbs.scheduler.updateJobInstanceLogLevel", param); }
 	 */
-	private int updateJobInstanceLogLevel(String jobInstanceId, String logLevel) throws SQLException {
+	public int updateJobInstanceLogLevel(String jobInstanceId, String logLevel) throws SQLException {
 	    Map<String, Object> param = new HashMap<>();
 	    param.put("logLevel", logLevel == null ? null : logLevel.toUpperCase());
 	    param.put("jobInstanceId", jobInstanceId);
@@ -1278,7 +1282,7 @@ public class JobInstanceManager {
 	 * 
 	 * return false; }
 	 */
-	private boolean lockJob(String jobInstanceId, String operatorId, String operatorIp) throws SQLException {
+	public boolean lockJob(String jobInstanceId, String operatorId, String operatorIp) throws SQLException {
 	    JobInstance jobins = getJobInstance(jobInstanceId);
 
 	    if (jobins != null && !jobins.isLocked()) {
@@ -1315,7 +1319,7 @@ public class JobInstanceManager {
 	 * 
 	 * return false; }
 	 */
-	private boolean unlockJob(String jobInstanceId, String operator) throws SQLException {
+	public boolean unlockJob(String jobInstanceId, String operator) throws SQLException {
 	    JobInstance jobins = getJobInstance(jobInstanceId);
 
 	    if (jobins != null && jobins.isLocked()) {
@@ -1353,7 +1357,7 @@ public class JobInstanceManager {
 	 * 
 	 * return false; }
 	 */
-	private boolean setConfirmed(String jobInstanceId, String operatorId, String operatorIp) throws SQLException {
+	public boolean setConfirmed(String jobInstanceId, String operatorId, String operatorIp) throws SQLException {
 	    JobInstance jobins = getJobInstance(jobInstanceId);
 
 	    if (jobins != null) {
@@ -1400,7 +1404,7 @@ public class JobInstanceManager {
 	 * (String) sqlMapClient.queryForObject("nbs.scheduler.getJobInstanceGroupId",
 	 * jobInsId); }
 	 */
-	private String getJobGroupId(String jobInsId) throws SQLException {
+	public String getJobGroupId(String jobInsId) throws SQLException {
 	    try (SqlSession session = sqlSessionFactory.openSession()) {
 	        return session.selectOne("nbs.scheduler.getJobInstanceGroupId", jobInsId);
 	    }
@@ -1424,7 +1428,7 @@ public class JobInstanceManager {
 	 * if (sqlMapClient.update("nbs.scheduler.updateJobInstanceAgentId", param) ==
 	 * 1) { return true; } else { return false; } }
 	 */
-	private boolean updateAgentId(String jobInstanceId, String newAgentId) throws SQLException {
+	public boolean updateAgentId(String jobInstanceId, String newAgentId) throws SQLException {
 	    Map<String, Object> param = new HashMap<>();
 	    param.put("jobInstanceId", jobInstanceId);
 	    param.put("newAgentId", newAgentId);

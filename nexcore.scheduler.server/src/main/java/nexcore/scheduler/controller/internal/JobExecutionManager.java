@@ -32,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class JobExecutionManager {
     @Autowired
     private SqlSessionFactory sqlSessionFactory;  // ✅ Spring에서 주입
-	private SqlSession sqlSession;
 
 
 	public void init() {
@@ -41,13 +40,22 @@ public class JobExecutionManager {
 	public void destroy() {
 	}
 	
-	public SqlSession getSqlMapClient() {
-		return sqlSession;
+//	public SqlSession getSqlMapClient() {
+//		return sqlSession;
+//	}
+//
+//	public void setSqlMapClient(SqlSession sqlSession) {
+//		this.sqlSession = sqlSession;
+//	}
+	
+	public SqlSessionFactory getSqlSessionFactory() {
+		return sqlSessionFactory;
 	}
 
-	public void setSqlMapClient(SqlSession sqlSession) {
-		this.sqlSession = sqlSession;
+	public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+		this.sqlSessionFactory = sqlSessionFactory;
 	}
+	
 
 	/*
 	 * private int insertJobExecution(JobExecution je) throws SQLException { //
@@ -385,7 +393,7 @@ public class JobExecutionManager {
 	 * "nbs.controller.selectLastEndedExecutionId", jobInstanceId); }
 	 */
 	
-	private String getLastEndedJobExecutionId(String jobInstanceId) throws SQLException {
+	public String getLastEndedJobExecutionId(String jobInstanceId) throws SQLException {
 	    try (SqlSession session = sqlSessionFactory.openSession()) {
 	        return session.selectOne("nbs.controller.selectLastEndedExecutionId", jobInstanceId);
 	    }

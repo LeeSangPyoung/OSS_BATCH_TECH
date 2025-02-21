@@ -42,7 +42,10 @@ public class ParallelRunningCounter {
 	public void setSqlMapClient(SqlSession sqlSession) {
 		this.sqlSession = sqlSession;
 	}
-
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.sqlSession = sqlSessionFactory.openSession(); // ✅ setter에서 세션 초기화
+    }
 	/**
 	 * DB 에서 parallel 설정 값을 읽음.
 	 * @param groupName
@@ -89,7 +92,7 @@ public class ParallelRunningCounter {
 	 * sqlMapClient.queryForList("nbs.scheduler.selectAllParallelGroup", null);
 	 * return list; }
 	 */
-	private List<ParallelGroup> getAllParallelGroupsList() throws SQLException {
+	public List<ParallelGroup> getAllParallelGroupsList() throws SQLException {
 	    try (SqlSession session = sqlSessionFactory.openSession()) {
 	        return session.selectList("nbs.scheduler.selectAllParallelGroup");
 	    }
@@ -106,7 +109,7 @@ public class ParallelRunningCounter {
 	 * sqlMapClient.update("nbs.scheduler.insertParallelGroup", parallelGroup); if
 	 * (updateCnt < 1) { // TODO warning 로그. } }
 	 */
-	private void addParallelGroup(ParallelGroup parallelGroup, AdminAuth auth) throws SQLException {
+	public void addParallelGroup(ParallelGroup parallelGroup, AdminAuth auth) throws SQLException {
 	    try (SqlSession session = sqlSessionFactory.openSession()) {
 	        int updateCnt = session.insert("nbs.scheduler.insertParallelGroup", parallelGroup);
 	        session.commit(); // ✅ MyBatis에서는 수동 commit 필요
@@ -128,7 +131,7 @@ public class ParallelRunningCounter {
 	 * sqlMapClient.update("nbs.scheduler.updateParallelGroup", parallelGroup); if
 	 * (updateCnt < 1) { // TODO warning 로그. } }
 	 */
-	private void modifyParallelGroup(ParallelGroup parallelGroup, AdminAuth auth) throws SQLException {
+	public void modifyParallelGroup(ParallelGroup parallelGroup, AdminAuth auth) throws SQLException {
 	    try (SqlSession session = sqlSessionFactory.openSession()) {
 	        int updateCnt = session.update("nbs.scheduler.updateParallelGroup", parallelGroup);
 	        session.commit(); // ✅ MyBatis에서는 수동 commit 필요
@@ -150,7 +153,7 @@ public class ParallelRunningCounter {
 	 * sqlMapClient.update("nbs.scheduler.deleteParallelGroup", groupName); if
 	 * (updateCnt < 1) { // TODO warning 로그. } }
 	 */
-	private void deleteParallelGroup(String groupName, AdminAuth auth) throws SQLException {
+	public void deleteParallelGroup(String groupName, AdminAuth auth) throws SQLException {
 	    try (SqlSession session = sqlSessionFactory.openSession()) {
 	        int updateCnt = session.delete("nbs.scheduler.deleteParallelGroup", groupName);
 	        session.commit(); // ✅ MyBatis에서는 수동 commit 필요
