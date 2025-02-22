@@ -77,6 +77,11 @@ public class DailyActivator implements /* Runnable, */ IMonitorDisplayable {
 //		thisThread.interrupt();
 	}
 	
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.sqlSession = sqlSessionFactory.openSession(); // ✅ setter에서 세션 초기화
+    }
+	
 	public boolean isEnable() {
 		return enable;
 	}
@@ -353,7 +358,8 @@ public class DailyActivator implements /* Runnable, */ IMonitorDisplayable {
 	    param.put("systemId", systemId);
 	    param.put("jobInsCount", -1);   // 먼저 -1 로 Insert 한다.
 	    param.put("jobInsIdList", "");
-	    
+	    System.out.println("##############");
+	    System.out.println(DateUtil.getCurrentTimestampString());
 	    try (SqlSession session = sqlSessionFactory.openSession(true)) { // 자동 커밋 모드
 	        return session.update("nbs.scheduler.insertActivationLog", param);
 	    }
@@ -428,6 +434,7 @@ public class DailyActivator implements /* Runnable, */ IMonitorDisplayable {
 	 * @throws SQLException
 	 */
 	private void checkLogTableConstraint() {
+		System.out.println("$$$$$$$$$$");
 		/*
 		 * 00000000 일자 로그를 지우고, 동일한 값으로 2번 insert 해본다.
 		 */
@@ -437,21 +444,25 @@ public class DailyActivator implements /* Runnable, */ IMonitorDisplayable {
 			// 이 경우는 DB 에 뭔가 문제가 있다.
 			throw new SchedulerException("com.error.occurred.while", e, "checking activation log table");
 		}
-		
+		// 나중에 복구할것
 		try {
 			insertActivationLog("00000000");
 		}catch(SQLException e) { // 두 노드가 동시에 start 될때는 여기서도 에러날 수 있다. 그냥 무시한다.
 		}
 		
 		try {
-			insertActivationLog("00000000");
+			// insertActivationLog("00000000");
+			System.out.println(455);
 			// 두번 정상 insert 된다는 것은 PK 가 안걸렸다는 뜻.
 			throw new SchedulerException("main.dailyact.logtable.no.pk");
-		}catch(SQLException e) {
+		}catch(Exception e) {
 			// PK DUP 에러일 경우는 정상.
+			System.out.println(460);
 			Util.logInfo(schedulerLog, "[DailyActivator] Activation Log table primary key ok.");
 		}finally {
 			try {
+				System.out.println(464);
+
 				deleteActivationLog("00000000"); // 먼저 00000000 일자 로그를 지운다.
 			}catch(Exception e) {
 			}

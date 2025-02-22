@@ -3,7 +3,130 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="nbs.monitor">
-	<select id="selectAgentInfoByQuery" parameterType="map" resultType="java.util.Map">
-        SELECT 1 
+
+    <!-- ✅ AgentInfo ResultMap -->
+	<resultMap id="AgentInfo-ResultMap" type="nexcore.scheduler.entity.AgentInfo">
+	    <result property="id" column="AGENT_ID"/>
+	    <result property="name" column="AGENT_NAME"/>
+	    <result property="desc" column="AGENT_DESC"/>
+	    <result property="ip" column="AGENT_IP"/>
+	    <result property="port" column="AGENT_PORT"/>
+	    <result property="runMode" column="RUN_MODE"/>
+	    <result property="inUseYN" column="IN_USE"/>
+	    <result property="baseDirectory" column="BASE_DIRECTORY"/>
+	    <result property="osUserId" column="OS_USERID"/>
+	    <result property="osPasswd" column="OS_PASSWD"/>
+	    <result property="startCmd" column="START_CMD"/>
+	    <result property="remoteStartType" column="REMOTE_START_TYPE"/>
+	    <result property="maxRunningJob" column="MAX_RUNNING_JOB"/>
+	    <result property="lastModifyTime" column="LAST_MODIFY_TIME"/>
+	</resultMap>
+	
+	<resultMap id="JobNotify-ResultMap" type="nexcore.scheduler.entity.JobNotify">
+	    <id property="id" column="NOTIFY_ID"/>
+	    <result property="desc" column="NOTIFY_DESC"/>
+	    <result property="jobIdExpression" column="JOB_ID_EXP"/>
+	    <result property="when" column="NOTIFY_WHEN"/>
+	    <result property="checkValue1" column="CHECK_VALUE1"/>
+	    <result property="checkValue2" column="CHECK_VALUE2"/>
+	    <result property="checkValue3" column="CHECK_VALUE3"/>
+	    <result property="receivers" column="RECEIVERS"/>
+	    <result property="lastModifyTime" column="LAST_MODIFY_TIME"/>
+	</resultMap>
+		
+
+    <!-- ✅ 조건에 따른 AGENT 조회 -->
+    <select id="selectAgentInfoByQuery" parameterType="map" resultMap="AgentInfo-ResultMap">
+        SELECT * FROM NBS_AGENT
+        <where>
+            <if test="queryCondition != null and queryCondition != ''">
+                ${queryCondition}
+            </if>
+        </where>
+        <if test="orderBy != null and orderBy != ''">
+            ${orderBy}
+        </if>
     </select>
+    
+    <select id="selectJobNotifyByQuery" parameterType="map" resultMap="JobNotify-ResultMap">
+	    SELECT * 
+	    FROM NBS_NOTIFY
+	    <where>
+	        ${queryCondition} <!-- 동적 쿼리 -->
+	    </where>
+	    <if test="orderBy != null and orderBy != ''">
+	        ${orderBy} <!-- 정렬 -->
+	    </if>
+	</select>
+    
+    <select id="selectJobNotifySendListForCount" parameterType="string" resultMap="JobNotifySendInfoForCount-ResultMap">
+	    <!-- selectJobNotifySendListForCount -->
+	    SELECT RECEIVER_ID, MAX(CREATE_TIME) AS SEND_TIME, COUNT(*) AS SEND_COUNT
+	    FROM (
+	        SELECT RECEIVER_ID, CREATE_TIME
+	        FROM NBS_NOTIFY_SEND_LIST
+	        WHERE JOB_EXECUTION_ID = #{jobExecutionId}
+	        GROUP BY JOB_EXECUTION_ID, RECEIVER_ID, CREATE_TIME
+	    ) TEMP_NOTIFY_COUNT
+	    GROUP BY RECEIVER_ID
+	</select>
+    <resultMap id="JobNotifySendInfoForCount-ResultMap" type="java.util.HashMap">
+	    <result property="receiverId" column="RECEIVER_ID" javaType="java.lang.String"/>
+	    <result property="sendTime"   column="SEND_TIME"   javaType="java.lang.String"/>
+	    <result property="sendCount"  column="SEND_COUNT"  javaType="java.lang.Integer"/>
+	</resultMap>
+	
+	
+	<select id="selectJobNotifySendList" parameterType="map" resultMap="JobNotifySendInfo-ResultMap">
+	    <![CDATA[
+	        SELECT A.*, B.OWNER, B.JOB_GROUP_ID, 
+	               (SELECT PHONE FROM NBS_USER WHERE USER_NAME = B.OWNER) AS OWNER_PHONE,
+	               C.JOB_INSTANCE_ID, C.START_TIME, C.END_TIME, C.OPERATOR_ID, C.OPERATOR_IP, 
+	               (SELECT USER_NAME FROM NBS_USER WHERE USER_ID = C.OPERATOR_ID) AS OPERATOR_NAME
+	        FROM NBS_NOTIFY_SEND_LIST A
+	        JOIN NBS_JOB_DEF B ON A.JOB_ID = B.JOB_ID
+	        JOIN NBS_JOB_EXE C ON A.JOB_EXECUTION_ID = C.JOB_EXECUTION_ID
+	        WHERE (A.SEND_TIME IS NULL OR A.SEND_TIME < #{retryBaseTime}) /* BEFORE 1 MIN */
+	          AND A.CREATE_TIME > #{fromCreateTime}
+	          AND A.TRY_COUNT < #{maxTryCount}
+	          AND A.SEND_STATE IN ('I', 'F', 'R') 
+	          AND (PROC_SYSTEM_ID IS NULL OR PROC_SYSTEM_ID = #{procSystemId})
+	        FETCH FIRST 100 ROWS ONLY
+	    ]]>
+	</select>
+	
+	<resultMap id="JobNotifySendInfo-ResultMap" type="nexcore.scheduler.entity.JobNotifySendInfo">
+	    <result property="seqNo" column="SEQ_NO" javaType="java.lang.Long"/>
+	    <result property="jobId" column="JOB_ID" javaType="java.lang.String"/>
+	    <result property="jobInstanceId" column="JOB_INSTANCE_ID" javaType="java.lang.Long"/>
+	    <result property="jobExecutionId" column="JOB_EXECUTION_ID" javaType="java.lang.Long"/>
+	    <result property="jobDesc" column="JOB_DESC" javaType="java.lang.String"/>
+	    <result property="agentNode" column="AGENT_NODE" javaType="java.lang.String"/>
+	    <result property="jobGroupId" column="JOB_GROUP_ID" javaType="java.lang.String"/>
+	    <result property="owner" column="OWNER" javaType="java.lang.String"/>
+	    <result property="ownerTel" column="OWNER_PHONE" javaType="java.lang.String"/>
+	    <result property="startTime" column="START_TIME" javaType="java.sql.Timestamp"/>
+	    <result property="endTime" column="END_TIME" javaType="java.sql.Timestamp"/>
+	    <result property="operatorId" column="OPERATOR_ID" javaType="java.lang.String"/>
+	    <result property="operatorName" column="OPERATOR_NAME" javaType="java.lang.String"/>
+	    <result property="operatorIp" column="OPERATOR_IP" javaType="java.lang.String"/>
+	    <result property="returnCode" column="RETURN_CODE" javaType="java.lang.String"/>
+	    <result property="errorMsg" column="ERROR_MSG" javaType="java.lang.String"/>
+	    <result property="receiverId" column="RECEIVER_ID" javaType="java.lang.String"/>
+	    <result property="receiverName" column="RECEIVER_NAME" javaType="java.lang.String"/>
+	    <result property="recvType" column="RECV_TYPE" javaType="java.lang.String"/>
+	    <result property="recvPoint" column="RECV_POINT" javaType="java.lang.String"/>
+	    <result property="createTime" column="CREATE_TIME" javaType="java.sql.Timestamp"/>
+	    <result property="sendState" column="SEND_STATE" javaType="java.lang.String"/>
+	    <result property="sendTime" column="SEND_TIME" javaType="java.sql.Timestamp"/>
+	    <result property="tryCount" column="TRY_COUNT" javaType="java.lang.Integer"/>
+	    <result property="notifyId" column="NOTIFY_ID" javaType="java.lang.String"/>
+	    <result property="checkValue1" column="CHECK_VALUE1" javaType="java.lang.String"/>
+	    <result property="checkValue2" column="CHECK_VALUE2" javaType="java.lang.String"/>
+	    <result property="checkValue3" column="CHECK_VALUE3" javaType="java.lang.String"/>
+	    <result property="procSystemId" column="PROC_SYSTEM_ID" javaType="java.lang.String"/>
+	</resultMap>
+	
+	
+    
 </mapper>

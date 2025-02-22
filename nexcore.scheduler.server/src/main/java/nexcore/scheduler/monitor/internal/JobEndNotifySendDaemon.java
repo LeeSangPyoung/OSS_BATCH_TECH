@@ -75,7 +75,10 @@ public class JobEndNotifySendDaemon implements Runnable {
 		destroyed = true;
 		thisThread.interrupt();
 	}
-
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.sqlSession = sqlSessionFactory.openSession(); // ✅ setter에서 세션 초기화
+    }
 	public boolean isEnable() {
 		return enable;
 	}

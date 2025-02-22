@@ -67,7 +67,11 @@ public class MonitorMain {
 	
 	public MonitorMain() {
 	}
-	
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.sqlSession = sqlSessionFactory.openSession(); // ✅ setter에서 세션 초기화
+    }
+
 	public void init() {
 		log = LogManager.getSchedulerLog();
 		Util.logServerInitConsole("MonitorMain");

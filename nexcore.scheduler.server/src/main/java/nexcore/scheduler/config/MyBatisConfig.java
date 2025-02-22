@@ -23,7 +23,7 @@ public class MyBatisConfig {
             "org.postgresql.Driver",
             "jdbc:postgresql://localhost:5432/nexcore",
             "nexcore",
-            "password"
+            "nexcore"
         );
     }
 

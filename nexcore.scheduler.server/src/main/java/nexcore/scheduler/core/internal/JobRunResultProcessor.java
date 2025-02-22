@@ -80,6 +80,11 @@ public class JobRunResultProcessor {
 
 	public void destroy() {
 	}
+	
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.sqlSession = sqlSessionFactory.openSession(); // ✅ setter에서 세션 초기화
+    }
 
 	public JobInstanceManager getJobInstanceManager() {
 		return jobInstanceManager;

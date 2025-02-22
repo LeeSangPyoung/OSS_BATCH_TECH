@@ -45,6 +45,10 @@ public class UserManager {
 	public void setSqlMapClient(SqlSession sqlSession) {
 		this.sqlSession = sqlSession;
 	}
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.sqlSession = sqlSessionFactory.openSession(); // ✅ setter에서 세션 초기화
+    }
 
 //	public User getUser(String userid) throws SQLException {
 //		return (User)sqlMapClient.queryForObject("nbs.monitor.selectUser", userid);

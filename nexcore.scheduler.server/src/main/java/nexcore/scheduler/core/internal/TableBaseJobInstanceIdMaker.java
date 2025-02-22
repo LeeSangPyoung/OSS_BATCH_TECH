@@ -6,6 +6,7 @@ import nexcore.scheduler.exception.SchedulerException;
 //import com.ibatis.sqlmap.client.SqlMapClient;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * <ul>
@@ -21,7 +22,8 @@ public class TableBaseJobInstanceIdMaker implements IJobInstanceIdMaker {
 	private int                     retryCount;
 
 	private TableBaseIdGenerator    tableBaseIdGenerator;
-	
+	@Autowired
+	private SqlSessionFactory sqlSessionFactory; // ✅ Spring에서 주입
 	public void init() {
 		if (retryCount==0) {
 			tableBaseIdGenerator = new TableBaseIdGenerator("JI", sqlSession);
@@ -32,6 +34,12 @@ public class TableBaseJobInstanceIdMaker implements IJobInstanceIdMaker {
 	
 	public void destroy() {
 	}
+	
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.sqlSession = sqlSessionFactory.openSession(); // ✅ setter에서 세션 초기화
+    }
+
 
 	public SqlSession getSqlMapClient() {
 		return sqlSession;

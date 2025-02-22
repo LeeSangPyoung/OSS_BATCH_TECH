@@ -41,6 +41,7 @@
     
     <bean id="nbs.scheduler.DBChecker" class="nexcore.scheduler.controller.internal.DBChecker" init-method="init" destroy-method="destroy">
         <property name="dataSource"             ref  ="nbs.scheduler.DataSource"/> 
+        
     </bean>
     
     <bean id="nbs.scheduler.LicenseManager" class="nexcore.scheduler.core.internal.LicenseManager" init-method="init" destroy-method="destroy" lazy-init="true">
@@ -51,6 +52,7 @@
         
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
 	    <property name="dataSource" ref="nbs.scheduler.DataSource" />
+	    <property name="mapperLocations" value="classpath:mappers/*.xml"/>
 	</bean>
 	    
 <!--     <bean id="nbs.scheduler.SqlMapClient" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean" depends-on="nbs.scheduler.DBChecker">
@@ -137,13 +139,13 @@
         <property name="jobAliveDay"             value="${scheduler.jobaliveday}" /> <!-- default=0, if you want then increase.-->
     </bean>
 
-    <bean id="nbs.monitor.MonitorServiceRMIExporter" class="org.springframework.remoting.rmi.RmiServiceExporter">
+<!--     <bean id="nbs.monitor.MonitorServiceRMIExporter" class="org.springframework.remoting.rmi.RmiServiceExporter">
         <property name = "serviceName"       value = "BatchMonitor"/>
         <property name = "service"           ref   = "nbs.monitor.MonitorService"/>
         <property name = "serviceInterface"  value = "nexcore.scheduler.entity.IMonitorService"/>
         <property name = "registryPort"      value = "${scheduler.rmi.server.port.${NEXCORE_ID}}"/>
         <property name = "servicePort"       value = "${scheduler.rmi.server.port.${NEXCORE_ID}}"/>
-    </bean>
+    </bean> -->
     
     <bean id="nbs.monitor.MonitorService"
         class="nexcore.scheduler.monitor.internal.MonitorServiceImpl"
@@ -171,13 +173,13 @@
         <property name="licenseManager"           ref = "nbs.scheduler.LicenseManager"/>
     </bean>
 
-    <bean id="nbs.controller.ha.PeerServiceRMIExporter" class="org.springframework.remoting.rmi.RmiServiceExporter">
+<!--     <bean id="nbs.controller.ha.PeerServiceRMIExporter" class="org.springframework.remoting.rmi.RmiServiceExporter">
         <property name = "serviceName"            value = "PeerService"/>
         <property name = "service"                ref   = "nbs.controller.ha.PeerService"/>
         <property name = "serviceInterface"       value = "nexcore.scheduler.controller.ha.IPeerService"/>
         <property name = "registryPort"           value = "${scheduler.rmi.server.port.${NEXCORE_ID}}"/>
         <property name = "servicePort"            value = "${scheduler.rmi.server.port.${NEXCORE_ID}}"/>
-    </bean>
+    </bean> -->
     
     <bean id="nbs.controller.ha.PeerService"
         class="nexcore.scheduler.controller.ha.server.PeerServiceImpl"

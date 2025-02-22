@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="nbs.scheduler">
+
+    <resultMap id="JobInstance-ResultMap" type="nexcore.scheduler.entity.JobInstance">
+	    <result property="procDate"          column="PROC_DATE"/>
+	    <result property="baseDate"          column="BASE_DATE"/>
+	    <result property="jobId"             column="JOB_ID"/>
+	    <result property="jobGroupId"        column="JOB_GROUP_ID"/>
+	    <result property="jobInstanceId"     column="JOB_INSTANCE_ID"/>
+	    <result property="description"       column="JOB_DESC"/>
+	    <result property="jobState"          column="JOB_STATE"/>
+	    <result property="jobStateReason"    column="JOB_STATE_REASON"/>
+	    <result property="lastJobExeId"      column="LAST_JOB_EXE_ID"/>
+	    <result property="lockedBy"          column="LOCKED_BY"/>
+	    <result property="timeFrom"          column="TIME_FROM"/>
+	    <result property="timeUntil"         column="TIME_UNTIL"/>
+	    <result property="repeatYN"          column="REPEAT_YN"/>
+	    <result property="repeatIntval"      column="REPEAT_INTVAL"/>
+	    <result property="repeatIntvalGb"    column="REPEAT_INTVAL_GB"/>
+	    <result property="repeatIfError"     column="REPEAT_IF_ERROR"/>
+	    <result property="repeatMaxOk"       column="REPEAT_MAX_OK"/>
+	    <result property="repeatExactExp"    column="REPEAT_EXACT_EXP"/>
+	    <result property="confirmNeedYN"     column="CONFIRM_NEED_YN"/>
+	    <result property="confirmed"         column="CONFIRMED"/>
+	    <result property="parallelGroup"     column="PARALLEL_GROUP"/>
+	    <result property="jobType"           column="JOB_TYPE"/>
+	    <result property="agentNode"         column="AGENT_NODE"/>
+	    <result property="lastAgentNode"     column="LAST_AGENT_NODE"/>
+	    <result property="componentName"     column="COMPONENT_NAME"/>
+	    <result property="activationTime"    column="ACTIVATION_TIME"/>
+	    <result property="activator"         column="ACTIVATOR"/>
+	    <result property="runCount"          column="RUN_COUNT"/>
+	    <result property="endOkCount"        column="END_OK_COUNT"/>
+	    <result property="logLevel"          column="LOG_LEVEL"/>
+	    <result property="lastStartTime"     column="LAST_START_TIME"/>
+	    <result property="lastEndTime"       column="LAST_END_TIME"/>
+	    <result property="lastModifyTime"    column="LAST_MODIFY_TIME"/>
+	</resultMap>
+    
+    
+    <select id="selectJobDefinitionsCount" resultType="int">
+	    SELECT COUNT(*) AS CNT
+	    FROM NBS_JOB_DEF
+	</select>
+    <select id="selectJobInstancesByQuery" parameterType="map" resultMap="JobInstance-ResultMap">
+	    SELECT *
+	    FROM NBS_JOB_INS
+	    ${queryCondition}
+	    ${orderBy}
+	</select>
+	
+	<select id="selectGlobalParam" parameterType="string" resultType="map">
+	    SELECT PARAM_NAME, PARAM_VALUE
+	    FROM NBS_GLOBAL_PARAM
+	    ORDER BY PARAM_NAME
+	</select>
+	<delete id="deleteActivationLog" parameterType="map">
+	    DELETE FROM NBS_ACTIVATION_LOG
+	    WHERE PROC_DATE = #{procDate}
+	</delete>
+
+	<insert id="insertActivationLog" parameterType="map">
+	    INSERT INTO NBS_ACTIVATION_LOG
+	        (ACTIVATION_TIME, PROC_DATE, SYSTEM_ID, JOB_INS_COUNT, JOB_INS_ID_LIST)
+	    VALUES ( #{systimestamp}, #{procDate}, #{systemId}, #{jobInsCount}, #{jobInsIdList} )
+	</insert>
+		
+	<!-- ■■■■■■■■■■■ TimeScheduler ■■■■■■■■■■■■■ -->
+	<insert id="insertTimeSchedulerLog" parameterType="map">/* insertTimeSchedulerLog */
+	    INSERT INTO NBS_TIMESCH_LOG
+	           (TS_DATE, TS_TIME, SYSTEM_ID, LAST_MODIFY_TIME)
+	    VALUES (TO_CHAR(CURRENT_TIMESTAMP, 'YYYYMMDD'), 
+	            TO_CHAR(CURRENT_TIMESTAMP, 'HH24MI'), 
+	            #{systemId}, 
+	            #{lastModifyTime})
+	</insert>   
+</mapper>

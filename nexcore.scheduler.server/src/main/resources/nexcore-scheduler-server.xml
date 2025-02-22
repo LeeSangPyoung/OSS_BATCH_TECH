@@ -22,7 +22,7 @@
         <property name="username"          value="nexcore"/>
         <property name="password">
             <bean class="nexcore.scheduler.util.PasswordPropertyGetter">
-                <property name="password" value="password"/>
+                <property name="password" value="nexcore"/>
             </bean>
         </property>
         <property name="initialSize"       value="2"/>
@@ -132,7 +132,7 @@
         class="nexcore.scheduler.controller.internal.ParameterManager"
         init-method="init" destroy-method="destroy">
         <description><![CDATA[파라미터를 해석함]]></description>
-        <property name="sqlMapClient"         ref="nbs.scheduler.SqlMapClient" />
+        <property name="sqlSessionFactory" 		 ref="sqlSessionFactory"/>
         <property name="scheduleCalendar"     ref="nbs.scheduler.ScheduleCalendar" />
         <property name="additionalFunctions">
             <list>
@@ -173,7 +173,8 @@
         class="nexcore.scheduler.monitor.internal.JobEndNotifySendDaemon"
         init-method="init" destroy-method="destroy">
         <property name="enable"              value="${scheduler.jobnotify.enable.${NEXCORE_ID}}" />
-        <property name="sqlMapClient"        ref  ="nbs.scheduler.SqlMapClient" />
+        <property name="sqlSessionFactory" 		 ref="sqlSessionFactory"/>
+        
         <property name="maxRetryCount"       value="10" /> 
         <property name="maxRetryHour"        value="1" /> <!-- hour   -->
         <property name="retryIntervalMin"    value="1" /> <!-- minute -->

@@ -67,7 +67,10 @@ public class TimeScheduler implements Runnable {
 		File startLockFile = new File(System.getProperty("NEXCORE_HOME")+"/etc/start.lock");
 		startLockFile.delete();
 	}
-
+    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.sqlSession = sqlSessionFactory.openSession(); // ✅ setter에서 세션 초기화
+    }
 	public boolean isEnable() {
 		return enable;
 	}
