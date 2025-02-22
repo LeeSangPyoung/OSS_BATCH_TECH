@@ -15,7 +15,6 @@
 %><%@page import="nexcore.scheduler.log.LogManager"
 %><%@ page import="org.apache.commons.lang3.time.FastDateFormat" 
 %><%@page import="org.apache.commons.logging.Log"
-%><%@page import="com.ibatis.sqlmap.client.event.RowHandler"
 %><%@include file= "customize.jsp"
 %><%!
     String getSystemId() {

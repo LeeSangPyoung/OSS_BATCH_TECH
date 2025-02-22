@@ -77,13 +77,14 @@
         <property name = "servicePort"       value = "${scheduler.rmi.server.port.${NEXCORE_ID}}"/>
     </bean> -->
     
-<!--     <bean id="nbs.controller.ControllerService"
+	<bean id="nbs.controller.ControllerService"
         class="nexcore.scheduler.controller.internal.ControllerServiceImpl"
         init-method="init" destroy-method="destroy">
         <description><![CDATA[Batch Controller RMI Service]]></description>
-        <property name="controllerMain"      ref="nbs.controller.ControllerMain"/>
+        <!-- <property name="controllerMain"      ref="nbs.controller.ControllerMain"/> -->
+        <constructor-arg ref="nbs.controller.ControllerMain"/>
     </bean>
- -->
+
 
     <bean id="nbs.controller.ControllerMain"
         class="nexcore.scheduler.controller.internal.ControllerMain"
