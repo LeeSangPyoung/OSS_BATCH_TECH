@@ -363,5 +363,58 @@
 	<delete id="deleteAgentInfo" parameterType="string">
 	    DELETE FROM NBS_AGENT WHERE AGENT_ID = #{id}
 	</delete>
+	
+	<select id="selectJobGroupByQuery" parameterType="map" resultMap="JobGroup-ResultMap">
+	    SELECT a.*, b.GROUP_ID AS OWNER_GROUP_ID, b.ATTR_ID, b.ATTR_VALUE
+	    FROM NBS_JOBGROUP a
+	    LEFT JOIN NBS_JOBGROUP_ATTR b ON a.GROUP_ID = b.GROUP_ID
+	    <if test="queryCondition != null and queryCondition != ''">
+	        ${queryCondition}
+	    </if>
+	    <if test="orderBy != null and orderBy != ''">
+	        ${orderBy}
+	    </if>
+	</select>
+		
+	<insert id="insertJobGroup" parameterType="nexcore.scheduler.entity.JobGroup">
+	    INSERT INTO NBS_JOBGROUP
+	        (GROUP_ID, GROUP_NAME, GROUP_DESC, PARENT_ID, CREATOR_ID, OWNER_ID, CREATE_TIME, LAST_MODIFY_TIME)
+	    VALUES
+	        (#{id}, #{name, jdbcType=VARCHAR}, #{desc, jdbcType=VARCHAR}, 
+	         #{parentId, jdbcType=VARCHAR}, #{creatorId, jdbcType=VARCHAR}, 
+	         #{ownerId, jdbcType=VARCHAR}, #{createTime, jdbcType=VARCHAR}, 
+	         #{lastModifyTime, jdbcType=VARCHAR})
+	</insert>
+
+	<resultMap id="JobGroupAttr-ResultMap" type="nexcore.scheduler.entity.JobGroupAttr">
+	    <result property="groupId" column="OWNER_GROUP_ID"/>
+	    <result property="id" column="ATTR_ID"/>
+	    <result property="value" column="ATTR_VALUE"/>
+	</resultMap>
+	<delete id="deleteJobGroup" parameterType="string">
+	    DELETE FROM NBS_JOBGROUP WHERE GROUP_ID = #{id}
+	</delete>
+	<delete id="deleteJobGroupAttr" parameterType="string">
+	    DELETE FROM NBS_JOBGROUP_ATTR WHERE GROUP_ID = #{id}
+	</delete>
+
+
+	<insert id="insertUser" parameterType="nexcore.scheduler.entity.User">
+	    INSERT INTO NBS_USER
+	        (USER_ID, USER_PASSWD, USER_NAME, USER_DESC, TEAM1, TEAM2, EMAIL, PHONE, IS_ADMIN, 
+	         IS_OPERATOR, IS_ACTIVE, OPER_JOB_ID_EXP, CREATE_TIME, LAST_MODIFY_TIME)
+	    VALUES 
+	        (#{id}, #{password}, #{name}, #{desc, jdbcType=VARCHAR}, #{team1, jdbcType=VARCHAR}, 
+	         #{team2, jdbcType=VARCHAR}, #{email, jdbcType=VARCHAR}, #{phone, jdbcType=VARCHAR}, 
+	         #{adminYN}, #{operatorYN}, #{activeYN}, #{operateJobIdExp, jdbcType=VARCHAR}, 
+	         #{createTime}, #{lastModifyTime})
+	</insert>
+	<delete id="deleteUser" parameterType="string">
+	    DELETE FROM NBS_USER WHERE USER_ID = #{id}
+	</delete>
+	
+	<delete id="deleteUserAuth" parameterType="string">
+	    DELETE FROM NBS_USER_AUTH WHERE USER_ID = #{id}
+	</delete>
 
 </mapper>

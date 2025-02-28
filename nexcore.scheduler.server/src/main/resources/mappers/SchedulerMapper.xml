@@ -268,5 +268,14 @@
 	    ${orderBy}
 	</select>
 		
-		
+	<insert id="insertGlobalParam" parameterType="map">
+	    INSERT INTO NBS_GLOBAL_PARAM (PARAM_NAME, PARAM_VALUE) 
+	    VALUES (#{paramName}, #{paramValue, jdbcType=VARCHAR})
+	</insert>
+	
+	<delete id="deleteGlobalParam" parameterType="map">
+	    DELETE FROM NBS_GLOBAL_PARAM
+	    WHERE PARAM_NAME = #{paramName}
+	</delete>
+			
 </mapper>

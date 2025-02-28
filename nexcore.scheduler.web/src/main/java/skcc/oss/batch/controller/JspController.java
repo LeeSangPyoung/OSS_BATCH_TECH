@@ -117,7 +117,73 @@ public class JspController {
         model.addAttribute("message", "This is /jobmon/common_query_jobgroupmon.jsp");
         return "/jobmon/common_query_jobgroupmon";  // view_jobins.jsp 매핑
     } 
+    @GetMapping("/jobmon/view_setting")
+    public String viewSetting(Model model) {
+        model.addAttribute("message", "This is /jobmon/view_setting.jsp");
+        return "/jobmon/view_setting";  // view_jobins.jsp 매핑
+    } 
+    @PostMapping("/jobmon/view_setting")
+    public String postViewSetting(Model model) {
+        model.addAttribute("message", "This is /jobmon/view_setting.jsp");
+        return "/jobmon/view_setting";  // view_jobins.jsp 매핑
+    } 
+    @GetMapping("/jobmon/view_setting_jobgroup")
+    public String viewSettingJobGroup(Model model) {
+        model.addAttribute("message", "This is /jobmon/view_setting_jobgroup.jsp");
+        return "/jobmon/view_setting_jobgroup";  // view_jobins.jsp 매핑
+    } 
+    @GetMapping("/jobmon/form_setting_jobgroup")
+    public String formSettingJobGroup(Model model) {
+        model.addAttribute("message", "This is /jobmon/form_setting_jobgroup.jsp");
+        return "/jobmon/form_setting_jobgroup";  // view_jobins.jsp 매핑
+    } 
     
+    @GetMapping("/jobmon/action_setting")
+    public String actionSetting(Model model) {
+        model.addAttribute("message", "This is /jobmon/action_setting.jsp");
+        return "/jobmon/action_setting";  // view_jobins.jsp 매핑
+    } 
+    @PostMapping("/jobmon/action_setting")
+    public String postActionSetting(Model model) {
+        model.addAttribute("message", "This is /jobmon/action_setting.jsp");
+        return "/jobmon/action_setting";  // view_jobins.jsp 매핑
+    } 
+    
+    @GetMapping("/jobmon/view_setting_user")
+    public String viewSettingUser(Model model) {
+        model.addAttribute("message", "This is /jobmon/view_setting_user.jsp");
+        return "/jobmon/view_setting_user";  // view_jobins.jsp 매핑
+    } 
+    
+    @GetMapping("/jobmon/form_setting_user")
+    public String formSettingUser(Model model) {
+        model.addAttribute("message", "This is /jobmon/form_setting_user.jsp");
+        return "/jobmon/form_setting_user";  // view_jobins.jsp 매핑
+    } 
+    
+    @GetMapping("/jobmon/action_user")
+    public String actionUser(Model model) {
+        model.addAttribute("message", "This is /jobmon/action_user.jsp");
+        return "/jobmon/action_user";  // view_jobins.jsp 매핑
+    } 
+    
+    @PostMapping("/jobmon/action_user")
+    public String postActionUser(Model model) {
+        model.addAttribute("message", "This is /jobmon/action_user.jsp");
+        return "/jobmon/action_user";  // view_jobins.jsp 매핑
+    } 
+    
+    @GetMapping("/jobmon/view_setting_sysmon")
+    public String viewSettingSysMon(Model model) {
+        model.addAttribute("message", "This is /jobmon/view_setting_sysmon.jsp");
+        return "/jobmon/view_setting_sysmon";  // view_jobins.jsp 매핑
+    } 
+    
+    @GetMapping("/jobmon/view_setting_gparam")
+    public String viewSettingGParam(Model model) {
+        model.addAttribute("message", "This is /jobmon/view_setting_gparam.jsp");
+        return "/jobmon/view_setting_gparam";  // view_jobins.jsp 매핑
+    } 
     
     /*** 🔥 여기에 추가: `POST /jobmon/login` 요청을 처리하는 메서드 ***/
     @PostMapping("/login")

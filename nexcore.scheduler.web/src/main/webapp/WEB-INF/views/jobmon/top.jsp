@@ -149,7 +149,7 @@
 			</dl>
 			<ul class="profile-menu">
 <!-- 					<li><a href="#0">My Settings</a></li> -->
-				<li><a href="view_setting.jsp?suburl=user"><%=Label.get("user")%></a></li>
+				<li><a href="view_setting?suburl=user"><%=Label.get("user")%></a></li>
 				<li><a href="javascript:formEditPassword('<%=user.getId()%>');" style="cursor:hand"><%=Label.get("top.change.password")%></a></li>
 				<li><a href="javascript:logout();"><%=Label.get("top.logout")%></a></li>
 			</ul>
@@ -186,16 +186,16 @@
 						<li>
 							<a href="#0"><span class="Icon left-icon6"></span><%=Label.get("top.menu.setting")%></a>
 							<ul style="display : none;">
-								<li><a href="view_setting.jsp?suburl=gparam"><%=Label.get("gparam")%></a></li>
-								<li><a href="view_setting.jsp?suburl=pgroup"><%=Label.get("pgroup")%></a></li>
-								<li><a href="view_setting.jsp?suburl=calendar">Calendar</a></li>
-								<li><a href="view_setting.jsp?suburl=sysmon">System</a></li>
-								<li><a href="view_setting.jsp?suburl=user"><%=Label.get("user")%></a></li>
-								<li><a href="view_setting.jsp?suburl=notify"><%=Label.get("notify.title")%></a></li>
-								<li><a href="view_setting.jsp?suburl=notifyreceiver"><%=Label.get("notify.receiver")%></a></li>
-								<li><a href="view_setting.jsp?suburl=notifylist"><%=Label.get("notify.view.title")%></a></li>
-								<li><a href="view_setting.jsp?suburl=jobgroupattrdef"><%=Label.get("jobgroup")%> <%=Label.get("common.attribute")%></a></li>
-								<li><a href="view_setting.jsp?suburl=jobgroup"><%=Label.get("jobgroup")%></a></li>
+								<li><a href="view_setting?suburl=gparam"><%=Label.get("gparam")%></a></li>
+								<li><a href="view_setting?suburl=pgroup"><%=Label.get("pgroup")%></a></li>
+								<li><a href="view_setting?suburl=calendar">Calendar</a></li>
+								<li><a href="view_setting?suburl=sysmon">System</a></li>
+								<li><a href="view_setting?suburl=user"><%=Label.get("user")%></a></li>
+								<li><a href="view_setting?suburl=notify"><%=Label.get("notify.title")%></a></li>
+								<li><a href="view_setting?suburl=notifyreceiver"><%=Label.get("notify.receiver")%></a></li>
+								<li><a href="view_setting?suburl=notifylist"><%=Label.get("notify.view.title")%></a></li>
+								<li><a href="view_setting?suburl=jobgroupattrdef"><%=Label.get("jobgroup")%> <%=Label.get("common.attribute")%></a></li>
+								<li><a href="view_setting?suburl=jobgroup"><%=Label.get("jobgroup")%></a></li>
 							</ul>
 						</li>
 					</ul>
@@ -233,16 +233,16 @@
 						<li>
 							<a href="#0"><span class="Icon left-icon6"></span><%=Label.get("top.menu.setting")%></a>
 							<ul style="display : none;">
-								<li><a href="view_setting.jsp?suburl=gparam"><%=Label.get("gparam")%></a></li>
-								<li><a href="view_setting.jsp?suburl=pgroup"><%=Label.get("pgroup")%></a></li>
-								<li><a href="view_setting.jsp?suburl=calendar">Calendar</a></li>
-								<li><a href="view_setting.jsp?suburl=sysmon">System</a></li>
-								<li><a href="view_setting.jsp?suburl=user"><%=Label.get("user")%></a></li>
-								<li><a href="view_setting.jsp?suburl=notify"><%=Label.get("notify.title")%></a></li>
-								<li><a href="view_setting.jsp?suburl=notifyreceiver"><%=Label.get("notify.receiver")%></a></li>
-								<li><a href="view_setting.jsp?suburl=notifylist"><%=Label.get("notify.view.title")%></a></li>
-								<li><a href="view_setting.jsp?suburl=jobgroupattrdef"><%=Label.get("jobgroup")%> <%=Label.get("common.attribute")%></a></li>
-								<li><a href="view_setting.jsp?suburl=jobgroup"><%=Label.get("jobgroup")%></a></li>
+								<li><a href="view_setting?suburl=gparam"><%=Label.get("gparam")%></a></li>
+								<li><a href="view_setting?suburl=pgroup"><%=Label.get("pgroup")%></a></li>
+								<li><a href="view_setting?suburl=calendar">Calendar</a></li>
+								<li><a href="view_setting?suburl=sysmon">System</a></li>
+								<li><a href="view_setting?suburl=user"><%=Label.get("user")%></a></li>
+								<li><a href="view_setting?suburl=notify"><%=Label.get("notify.title")%></a></li>
+								<li><a href="view_setting?suburl=notifyreceiver"><%=Label.get("notify.receiver")%></a></li>
+								<li><a href="view_setting?suburl=notifylist"><%=Label.get("notify.view.title")%></a></li>
+								<li><a href="view_setting?suburl=jobgroupattrdef"><%=Label.get("jobgroup")%> <%=Label.get("common.attribute")%></a></li>
+								<li><a href="view_setting?suburl=jobgroup"><%=Label.get("jobgroup")%></a></li>
 							</ul>
 						</li>
 					</ul>
@@ -303,7 +303,7 @@
     
     if (isAdmin(request)) {
         menus.put("view_server.jsp",   Label.get("top.menu.server"));
-        menus.put("view_setting.jsp",  Label.get("top.menu.setting"));
+        menus.put("view_setting",  Label.get("top.menu.setting"));
     }
 	
     String pageURI = request.getRequestURI();

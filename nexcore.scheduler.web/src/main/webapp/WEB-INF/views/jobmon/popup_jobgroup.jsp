@@ -79,7 +79,7 @@ $a.page(function() {
 			<div class="content-title"><%=Label.get("jobgroup")%> <%=Label.get("common.select")%></div>
 		</div>
 
-		<form name="form1" action="action_setting.jsp" method="POST">
+		<form name="form1" action="action_setting" method="POST">
 		<input type="hidden" name="suburl"         value="jobgroup">
 		<table class="Table Width-100 Margin-bottom-10" >
 <!-- 		<colgroup>
