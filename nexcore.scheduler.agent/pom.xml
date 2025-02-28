@@ -1,0 +1,215 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.2</version>  <!-- 🔹 Spring Boot 2.7.16으로 변경 -->
+        <relativePath/>
+    </parent>
+
+    <groupId>nexcore.scheduler</groupId>
+    <artifactId>nexcore-scheduler-server</artifactId>
+    <version>1.0.0</version>
+
+    <properties>
+        <java.version>17</java.version>  <!-- 🔹 Java 17 유지 -->
+    </properties>
+
+    <dependencies>
+        <!-- Spring Boot Core -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Logging -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-logging</artifactId>
+        </dependency>
+
+        <!-- log4j 1.2.17 (⚠️ 보안 취약점 있음, 가능하면 logback 추천) -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
+
+        <!-- javax.servlet-api 추가 (Spring Boot 2.x에서 필요할 수 있음) -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+		    <groupId>com.sun.mail</groupId>
+		    <artifactId>jakarta.mail</artifactId>
+		    <version>1.6.7</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.mortbay.jetty</groupId>
+		    <artifactId>jetty</artifactId>
+		    <version>6.1.26</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.mortbay.jetty</groupId>
+		    <artifactId>jetty-util</artifactId>
+		    <version>6.1.26</version>
+		</dependency>
+		<!-- Spring Boot 기본 의존성 -->
+	    <dependency>
+	        <groupId>org.springframework.boot</groupId>
+	        <artifactId>spring-boot-starter-data-jpa</artifactId>
+	        
+	    </dependency>
+	
+	    <!-- Apache Commons DBCP2 추가 -->
+	    <dependency>
+	        <groupId>org.apache.commons</groupId>
+	        <artifactId>commons-dbcp2</artifactId>
+	        <version>2.9.0</version> <!-- 최신 버전 확인 후 변경 가능 -->
+	    </dependency>
+	    
+	    <dependency>
+		    <groupId>org.postgresql</groupId>
+		    <artifactId>postgresql</artifactId>
+		    <version>42.7.1</version>  <!-- 최신 버전 확인 가능 -->
+		</dependency>
+
+	
+		<dependency>
+		    <groupId>commons-collections</groupId>
+		    <artifactId>commons-collections</artifactId>
+		    <version>3.2.2</version>  <!-- iBatis 2.x에서 주로 사용 -->
+		</dependency>
+		
+		<dependency>
+		    <groupId>commons-collections</groupId>
+		    <artifactId>commons-collections</artifactId>
+		    <version>3.2.2</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>commons-lang</groupId>
+		    <artifactId>commons-lang</artifactId>
+		    <version>2.6</version>
+		</dependency>   
+		
+		<!--<dependency>
+		    <groupId>com.ibatis</groupId>
+		    <artifactId>ibatis-sqlmap</artifactId>
+		    <version>2.3.4.726</version>
+		    <scope>system</scope>
+		    <systemPath>D:/workspace_batch/nexcore.scheduler.server_spring/src/main/resources/lib/ibatis-sqlmap-2.3.4.726.jar</systemPath>
+		</dependency>-->
+		<dependency>
+		    <groupId>nexcore</groupId>
+		    <artifactId>nexcore-license</artifactId>
+		    <version>2.0</version>
+		    <scope>system</scope>
+		    <systemPath>D:/workspace_0220/nexcore.scheduler.common/lib/nexcore-framework-license-2.0.jar</systemPath>
+		</dependency> 
+ 
+		<dependency>
+			<groupId>nexcore.scheduler</groupId>
+		    <artifactId>nexcore-scheduler-common</artifactId>
+		    <version>1.0.0</version>
+		</dependency> 
+		
+		<dependency>
+		    <groupId>jakarta.annotation</groupId>
+		    <artifactId>jakarta.annotation-api</artifactId>
+		    <version>2.1.1</version>  <!-- 최신 버전 사용 -->
+		</dependency>
+		
+		<dependency>
+		    <groupId>jakarta.mail</groupId>
+		    <artifactId>jakarta.mail-api</artifactId>
+		    <version>2.1.2</version>
+		</dependency>
+				
+		<dependency>
+		    <groupId>commons-dbcp</groupId>
+		    <artifactId>commons-dbcp</artifactId>
+		    <version>1.4</version>  <!-- 1.x 버전 사용 -->
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.mybatis</groupId>
+		    <artifactId>mybatis</artifactId>
+		    <version>3.5.11</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.mybatis.spring.boot</groupId>
+		    <artifactId>mybatis-spring-boot-starter</artifactId>
+		    <version>3.0.2</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.quartz-scheduler</groupId>
+		    <artifactId>quartz</artifactId>
+		    <version>2.3.2</version>
+		</dependency>
+
+		<dependency>
+		    <groupId>org.apache.httpcomponents.client5</groupId>
+		    <artifactId>httpclient5</artifactId>
+		    <version>5.2.1</version>
+		</dependency>
+
+		 <dependency>
+		    <groupId>com.fasterxml.jackson.core</groupId>
+		    <artifactId>jackson-databind</artifactId>
+		    <version>2.17.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>nexcore.scheduler</groupId>
+		    <artifactId>nexcore-scheduler-common</artifactId>
+		    <version>1.0.0</version>
+		</dependency> 
+		
+		    <!-- Spring ORM (JPA & MyBatis 지원) -->
+	   <!-- <dependency>
+	        <groupId>org.springframework</groupId>
+	        <artifactId>spring-orm</artifactId>
+	        <version>3.2.18.RELEASE</version>
+	    </dependency>-->
+	
+<!--		<dependency>
+		    <groupId>org.mybatis</groupId>
+		    <artifactId>mybatis-spring-boot-starter</artifactId>
+		    <version>3.0.0</version>
+		</dependency>
+
+
+-->
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+            <resources>
+        <resource>
+            <directory>src/main/resources</directory>
+            <includes>
+                <include>**/*.properties</include>
+                <include>**/*.xml</include>
+            </includes>
+        </resource>
+    </resources>
+    </build>
+    
+    
+</project>
