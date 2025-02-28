@@ -121,6 +121,7 @@ public class AgentInfoManager {
 	private int selectAgentInfoCountByQuery(String query) throws SQLException {
 	    Map<String, Object> m = new HashMap<>();
 	    m.put("queryCondition", query);
+	    System.out.println(query);
 	    return sqlSession.selectOne("nbs.monitor.selectAgentInfoCountByQuery", m);
 	}
 

@@ -113,7 +113,7 @@
 		    <artifactId>nexcore-license</artifactId>
 		    <version>2.0</version>
 		    <scope>system</scope>
-		    <systemPath>D:/workspace_nexcore_0223/nexcore.scheduler.common/lib/nexcore-framework-license-2.0.jar</systemPath>
+		    <systemPath>D:/workspace_0220/nexcore.scheduler.common/lib/nexcore-framework-license-2.0.jar</systemPath>
 		</dependency> 
  
 		<dependency>

@@ -73,7 +73,7 @@
 		    <artifactId>nexcore-framework-supports</artifactId>
 		    <version>1.0.0</version>
 		    <scope>system</scope>
-		    <systemPath>D:/workspace_nexcore_0223/nexcore.scheduler.common/lib/nexcore-framework-supports-7.0.0.jar</systemPath>
+		    <systemPath>D:/workspace_0220/nexcore.scheduler.common/lib/nexcore-framework-supports-7.0.0.jar</systemPath>
 		</dependency>
 		<dependency>
 		    <groupId>org.mybatis</groupId> 

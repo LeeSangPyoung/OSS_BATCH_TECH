@@ -18,7 +18,7 @@
             	System.out.println(16);
                 session.setAttribute("user",      user);
                 session.setAttribute("loginTime", new Long(System.currentTimeMillis()));
-                response.sendRedirect("view_jobins.jsp");
+                response.sendRedirect("/jobmon/view_jobins");
             }else {
             	System.out.println(21);
                 putMsg(session, "Login Fail. ");
@@ -29,11 +29,11 @@
     }else if ("logout".equals(cmd)) {
         String ltime1 = request.getParameter("login_time");
         String ltime2 = String.valueOf(session.getAttribute("loginTime"));
-        if (Util.equalsIgnoreNull(ltime1, ltime2)) { // 로그인한 그 사람이 맞는지 최소한의 검증.
+        if (Util.equalsIgnoreNull(ltime1, ltime2)) { // 濡�洹몄�명�� 洹� �щ���� 留���吏� 理������� 寃�利�.
             session.removeAttribute("user");
             session.removeAttribute("loginTime");
         }
-        response.sendRedirect("view_jobins");
+        response.sendRedirect("/jobmon/view_jobins");
     }
 %>
 <html>
@@ -52,17 +52,17 @@ function doPreSubmit(arg) {
 }
 
 function doSubmit() {
-	//초기메뉴 선택
+	//珥�湲곕��� ����
 	alert(123);
 	$a.session('menu_no1', 1); //leftmenu open 
 	$a.session('menu_no2', 7); //leftmenu close
 	
-	//좌측메뉴 펼침상태로 세팅
+	//醫�痢〓��� �쇱묠����濡� �명��
 	$a.session('menu_open', true);
 	
-	// `cmd` 값 확인
+	// `cmd` 媛� ����
 	let cmdInput = document.querySelector("input[name='cmd']");
-	console.log("cmd 값 확인:", cmdInput ? cmdInput.value : "cmd input 없음");
+	console.log("cmd 媛� ����:", cmdInput ? cmdInput.value : "cmd input ����");
 	alert(cmdInput.value);
 
 	
@@ -79,7 +79,7 @@ function doCancel() {
 function doLoad() {
 	displayMsg();
 	document.MyForm.user_id.focus();
-	$("body").addClass('login-bg');//body에 직접 class를 적용하거나 style을 부여하면 적용되지 않아, 다음과 같이 처리함. 
+	$("body").addClass('login-bg');//body�� 吏��� class瑜� ���⑺��嫄곕�� style�� 遺��ы��硫� ���⑸��吏� ����, �ㅼ��怨� 媛��� 泥�由ы��. 
 }
 
 
@@ -93,8 +93,8 @@ function doLoad() {
 <%-- 		<h1><img src="./styles/images/nexcore-logo.png" alt="NEXCORE" /></h1>  --%>
 	</div>
 	<div class="login-wrap">
-		<div class="login-title">
-			<h2 class="Color-white">NEXCORE Batch<br>Scheduler</h2>
+		<div class="login-title"> 
+			<h2 class="Color-white">OSS <br>Batch Scheduler</h2>
 		</div>
 		<div class="login">
 			<p class="login-domain"><%=Label.get("common.server")%> : <%=getServerName()%>(<%=getHostName()%>)</p>

@@ -77,4 +77,196 @@
 	            #{systemId}, 
 	            #{lastModifyTime})
 	</insert>   
+	<select id="selectJobInstancesByDynamicQuery" parameterType="map" resultMap="JobInstance-ResultMap">
+	    SELECT *
+	    FROM NBS_JOB_INS
+	    <include refid="selectJobInstancesByDynamicQueryFragment"/>
+	    ${orderBy}
+	</select>
+	
+	<sql id="selectJobInstancesByDynamicQueryFragment">
+	    <where>
+	        <if test="viewFilterId != null and viewFilterId > -1">
+	            AND JOB_ID IN (SELECT JOB_ID FROM NBS_VIEW_FILTER_DTL WHERE VF_ID = #{viewFilterId})
+	        </if>
+	        <if test="jobInstanceIdLike != null and jobInstanceIdLike != ''">
+	            AND JOB_INSTANCE_ID LIKE #{jobInstanceIdLike}
+	        </if>
+	        <if test="jobGroupIdLike != null and jobGroupIdLike != ''">
+	            AND JOB_GROUP_ID LIKE #{jobGroupIdLike}
+	        </if>
+	        <if test="jobGroupNameLike != null and jobGroupNameLike != ''">
+	            AND JOB_GROUP_ID IN (SELECT GROUP_ID FROM NBS_JOBGROUP WHERE GROUP_NAME LIKE #{jobGroupNameLike})
+	        </if>
+	        <if test="jobId != null and jobId != ''">
+	            AND JOB_ID = #{jobId}
+	        </if>
+	        <if test="componentNameLike != null and componentNameLike != ''">
+	            AND COMPONENT_NAME LIKE #{componentNameLike}
+	        </if>
+	        <if test="jobDescLike != null and jobDescLike != ''">
+	            AND JOB_DESC LIKE #{jobDescLike}
+	        </if>
+	        <if test="jobType != null and jobType != ''">
+	            AND JOB_TYPE LIKE #{jobType}
+	        </if>
+	        <if test="preJobIdLike != null and preJobIdLike != ''">
+	            AND JOB_ID IN (SELECT JOB_ID FROM NBS_JOB_DEF_PREJOB WHERE PRE_JOB_ID LIKE #{preJobIdLike})
+	        </if>
+	        <if test="triggerJobIdLike != null and triggerJobIdLike != ''">
+	            AND JOB_ID IN (SELECT JOB_ID FROM NBS_JOB_DEF_TRIGGER WHERE TRIGGER_JOB_ID LIKE #{triggerJobIdLike})
+	        </if>
+	        <if test="lastRetCode != null">
+	            <choose>
+	                <when test="lastRetCode == '0'">
+	                    AND LAST_JOB_EXE_ID IS NOT NULL 
+	                    AND EXISTS (SELECT 1 FROM NBS_JOB_EXE a WHERE LAST_JOB_EXE_ID = a.JOB_EXECUTION_ID AND a.RETURN_CODE = 0)
+	                </when>
+	                <when test="lastRetCode == '1'">
+	                    AND LAST_JOB_EXE_ID IS NOT NULL 
+	                	AND EXISTS (SELECT 1 FROM NBS_JOB_EXE a WHERE LAST_JOB_EXE_ID = a.JOB_EXECUTION_ID AND a.RETURN_CODE &lt;&gt; 0)
+	                	
+	                </when>
+	                <when test="lastRetCode == '-1'">
+	                    AND LAST_JOB_EXE_ID IS NULL
+	                </when>
+	            </choose>
+	        </if>
+	        <if test="agentId != null and agentId != ''">
+	            AND AGENT_NODE LIKE #{agentId}
+	        </if>
+	        <if test="jobState != null and jobState != ''">
+	            AND JOB_STATE = #{jobState}
+	        </if>
+	        <if test="ownerLike != null and ownerLike != ''">
+	            AND JOB_ID IN (SELECT JOB_ID FROM NBS_JOB_DEF WHERE OWNER LIKE #{ownerLike})
+	        </if>
+	        <if test="procDate != null and procDate != ''">
+	            AND PROC_DATE LIKE #{procDate}
+	        </if>
+	        <if test="procDateFrom != null and procDateTo != null">
+	            AND PROC_DATE BETWEEN #{procDateFrom} AND #{procDateTo}
+	        </if>
+	        <if test="activationTimeFrom != null and activationTimeTo != null">
+	            AND ACTIVATION_TIME BETWEEN #{activationTimeFrom} AND #{activationTimeTo}
+	        </if>
+	        <if test="lastModifyTimeFrom != null">
+	            AND LAST_MODIFY_TIME > #{lastModifyTimeFrom}
+	        </if>
+	        <if test="authorizedJobGroupIdViewList != null and authorizedJobGroupIdViewList.size() > 0">
+	            AND JOB_GROUP_ID IN
+	            <foreach collection="authorizedJobGroupIdViewList" item="jobGroupId" open="(" separator="," close=")">
+	                #{jobGroupId}
+	            </foreach>
+	        </if>
+	    </where>
+	</sql>
+	
+	<select id="selectJobInstanceCountByDynamicQuery" parameterType="map" resultType="int">
+	    SELECT COUNT(*) AS CNT
+	    FROM NBS_JOB_INS
+	    <include refid="selectJobInstancesByDynamicQueryFragment"/>
+	</select>
+		
+	<select id="selectJobDefinitionsByDynamicQuery" parameterType="map" resultMap="JobDefinition-ResultMap">
+	    SELECT *
+	    FROM NBS_JOB_DEF
+	    <include refid="selectJobDefinitionsByDynamicQueryFragment"/>
+	</select>
+	<sql id="selectJobDefinitionsByDynamicQueryFragment">
+	    <where>
+	        <if test="viewFilterId &gt; -1">
+	            AND JOB_ID IN (SELECT JOB_ID FROM NBS_VIEW_FILTER_DTL WHERE VF_ID = #{viewFilterId})
+	        </if>
+	        <if test="jobIdLike != null and jobIdLike != ''">
+	            AND JOB_ID LIKE #{jobIdLike}
+	        </if>
+	        <if test="jobGroupIdLike != null and jobGroupIdLike != ''">
+	            AND JOB_GROUP_ID LIKE #{jobGroupIdLike}
+	        </if>
+	        <if test="jobGroupNameLike != null and jobGroupNameLike != ''">
+	            AND JOB_GROUP_ID IN (SELECT GROUP_ID FROM NBS_JOBGROUP WHERE GROUP_NAME LIKE #{jobGroupNameLike})
+	        </if>
+	        <if test="componentNameLike != null and componentNameLike != ''">
+	            AND COMPONENT_NAME LIKE #{componentNameLike}
+	        </if>
+	        <if test="jobDescLike != null and jobDescLike != ''">
+	            AND JOB_DESC LIKE #{jobDescLike}
+	        </if>
+	        <if test="jobType != null and jobType != ''">
+	            AND JOB_TYPE LIKE #{jobType}
+	        </if>
+	        <if test="preJobIdLike != null and preJobIdLike != ''">
+	            AND JOB_ID IN (SELECT JOB_ID FROM NBS_JOB_DEF_PREJOB WHERE PRE_JOB_ID LIKE #{preJobIdLike})
+	        </if>
+	        <if test="triggerJobIdLike != null and triggerJobIdLike != ''">
+	            AND JOB_ID IN (SELECT JOB_ID FROM NBS_JOB_DEF_TRIGGER WHERE TRIGGER_JOB_ID LIKE #{triggerJobIdLike})
+	        </if>
+	        <if test="agentId != null and agentId != ''">
+	            AND AGENT_NODE LIKE #{agentId}
+	        </if>
+	        <if test="ownerLike != null and ownerLike != ''">
+	            AND JOB_ID IN (SELECT JOB_ID FROM NBS_JOB_DEF WHERE OWNER LIKE #{ownerLike})
+	        </if>
+	        <if test="authorizedJobGroupIdViewList != null and authorizedJobGroupIdViewList.size() > 0">
+	            AND JOB_GROUP_ID IN 
+	            <foreach item="item" collection="authorizedJobGroupIdViewList" open="(" separator="," close=")">
+	                #{item}
+	            </foreach>
+	        </if>
+	    </where>
+	</sql>
+		
+	<resultMap id="JobDefinition-ResultMap" type="nexcore.scheduler.entity.JobDefinition">
+	    <result property="jobId" column="JOB_ID"/>
+	    <result property="jobGroupId" column="JOB_GROUP_ID"/>
+	    <result property="owner" column="OWNER"/>
+	    <result property="description" column="JOB_DESC"/>
+	    <result property="timeFrom" column="TIME_FROM"/>
+	    <result property="timeUntil" column="TIME_UNTIL"/>
+	    <result property="repeatYN" column="REPEAT_YN"/>
+	    <result property="repeatIntval" column="REPEAT_INTVAL"/>
+	    <result property="repeatIntvalGb" column="REPEAT_INTVAL_GB"/>
+	    <result property="repeatIfError" column="REPEAT_IF_ERROR"/>
+	    <result property="repeatMaxOk" column="REPEAT_MAX_OK"/>
+	    <result property="repeatExactExp" column="REPEAT_EXACT_EXP"/>
+	    <result property="confirmNeedYN" column="CONFIRM_NEED_YN"/>
+	    <result property="parallelGroup" column="PARALLEL_GROUP"/>
+	    <result property="jobType" column="JOB_TYPE"/>
+	    <result property="agentNode" column="AGENT_NODE"/>
+	    <result property="componentName" column="COMPONENT_NAME"/>
+	    <result property="scheduleType" column="SCHEDULE_TYPE"/>
+	    <result property="daysInMonth" column="DAYS_IN_MONTH"/>
+	    <result property="months" column="MONTHS"/>
+	    <result property="daysOfWeek" column="DAYS_OF_WEEK"/>
+	    <result property="weekdayMonthdayType" column="WEEKDAY_MONTHDAY_TYPE"/>
+	    <result property="calendarId" column="CALENDAR_ID"/>
+	    <result property="calendarExps" column="CALENDAR_EXP"/>
+	    <result property="dayOfMonthScheduleType" column="DAY_SCHEDULE_TYPE"/>
+	    <result property="beforeAfterExp" column="BEFORE_AFTER_EXP"/>
+	    <result property="shiftExp" column="SHIFT_EXP"/>
+	    <result property="shiftExp2" column="SHIFT_EXP2"/>
+	    <result property="fixedDays" column="FIXED_DAYS"/>
+	    <result property="extraSchedule" column="EXTRA_SCHEDULE"/>
+	    <result property="baseDateCalId" column="BASE_DATE_CAL_ID"/>
+	    <result property="baseDateLogic" column="BASE_DATE_LOGIC"/>
+	    <result property="logLevel" column="LOG_LEVEL"/>
+	    <result property="createTime" column="CREATE_TIME"/>
+	    <result property="lastModifyTime" column="LAST_MODIFY_TIME"/>
+	</resultMap>
+	
+	<select id="selectJobInstancesFreeColumnByDynamicQuery" parameterType="map" resultType="map">
+	    SELECT ${columnList}
+	    FROM NBS_JOB_INS
+	    <include refid="selectJobInstancesByDynamicQueryFragment"/>
+	    ${orderBy}
+	</select>
+	<select id="selectJobDefinitionsFreeColumnByDynamicQuery" parameterType="map" resultType="map">
+	    SELECT ${columnList}
+	    FROM NBS_JOB_DEF
+	    <include refid="selectJobDefinitionsByDynamicQueryFragment"/>
+	    ${orderBy}
+	</select>
+		
+		
 </mapper>

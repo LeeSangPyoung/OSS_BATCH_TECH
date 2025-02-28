@@ -126,7 +126,242 @@
 	    <result property="checkValue3" column="CHECK_VALUE3" javaType="java.lang.String"/>
 	    <result property="procSystemId" column="PROC_SYSTEM_ID" javaType="java.lang.String"/>
 	</resultMap>
+	<select id="selectUser" parameterType="string" resultMap="User-ResultMap">
+	    SELECT A.*, B.USER_ID AS OWNER_USER_ID, B.AUTH_KIND, B.TARGET_OBJECT
+	      FROM NBS_USER A LEFT JOIN NBS_USER_AUTH B
+	        ON A.USER_ID = B.USER_ID
+	     WHERE A.USER_ID = #{id}
+	</select>
 	
+	<select id="selectUserByQuery" parameterType="map" resultMap="User-ResultMap">
+	    SELECT A.*, B.USER_ID AS OWNER_USER_ID, B.AUTH_KIND, B.TARGET_OBJECT
+	      FROM NBS_USER A LEFT JOIN NBS_USER_AUTH B
+	        ON A.USER_ID = B.USER_ID
+	      ${queryCondition}
+	      ${orderBy}
+	</select>
+	<resultMap id="User-ResultMap" type="nexcore.scheduler.entity.User">
+	    <id property="id" column="USER_ID"/>
+	    <result property="password" column="USER_PASSWD"/>
+	    <result property="name" column="USER_NAME"/>
+	    <result property="desc" column="USER_DESC"/>
+	    <result property="team1" column="TEAM1"/>
+	    <result property="team2" column="TEAM2"/>
+	    <result property="email" column="EMAIL"/>
+	    <result property="phone" column="PHONE"/>
+	    <result property="adminYN" column="IS_ADMIN"/>
+	    <result property="operatorYN" column="IS_OPERATOR"/>
+	    <result property="activeYN" column="IS_ACTIVE"/>
+	    <result property="operateJobIdExp" column="OPER_JOB_ID_EXP"/>
+	    <result property="createTime" column="CREATE_TIME"/>
+	    <result property="lastModifyTime" column="LAST_MODIFY_TIME"/>
+	    <collection property="authList" ofType="nexcore.scheduler.entity.UserAuth" resultMap="nbs.monitor.UserAuth-ResultMap"/>
+	</resultMap>
+	<resultMap id="UserAuth-ResultMap" type="nexcore.scheduler.entity.UserAuth">
+	    <result property="userId" column="OWNER_USER_ID"/>
+	    <result property="authKind" column="AUTH_KIND"/>
+	    <result property="targetObject" column="TARGET_OBJECT"/>
+	</resultMap>
+		
+	<!-- ■■■■■■■■■■■■■ ViewFilter ■■■■■■■■■■■■■=== -->
+
+	<resultMap id="ViewFilter-ResultMap" type="nexcore.scheduler.entity.ViewFilter">
+	    <id property="id" column="VF_ID"/>
+	    <result property="name" column="VF_NAME"/>
+	    <result property="team" column="VF_TEAM"/>
+	    <result property="owner" column="VF_OWNER"/>
+	    <result property="description" column="VF_DESC"/>
+	    <result property="jobCount" column="JOB_COUNT"/>
+	    <result property="lastModifyTime" column="LAST_MODIFY_TIME"/>
+	</resultMap>
 	
+	<select id="selectViewFilter" parameterType="int" resultMap="ViewFilter-ResultMap">
+	    SELECT * FROM NBS_VIEW_FILTER WHERE VF_ID = #{id}
+	</select>
+	
+	<select id="selectViewFilterByQuery" parameterType="map" resultMap="ViewFilter-ResultMap">
+	    SELECT * FROM NBS_VIEW_FILTER
+	    ${queryCondition}
+	    ${orderBy}
+	</select>
+	
+	<select id="selectViewFilterJobList" parameterType="int" resultType="string">
+	    SELECT JOB_ID FROM NBS_VIEW_FILTER_DTL WHERE VF_ID = #{id}
+	</select>
+	
+	<select id="selectJobDefListByViewFilter" parameterType="int" resultMap="JobDefinition-ResultMap">
+	    SELECT B.* 
+	    FROM NBS_VIEW_FILTER_DTL A, NBS_JOB_DEF B
+	    WHERE A.VF_ID = #{id} 
+	      AND A.JOB_ID = B.JOB_ID
+	</select>
+	
+	<insert id="insertViewFilter" parameterType="nexcore.scheduler.entity.ViewFilter">
+	    INSERT INTO NBS_VIEW_FILTER
+	           (VF_NAME, VF_TEAM, VF_OWNER, VF_DESC, JOB_COUNT, LAST_MODIFY_TIME)
+	    VALUES (#{name}, #{team}, #{owner}, #{description}, #{jobCount}, #{lastModifyTime})
+	</insert>
+	
+	<insert id="insertViewFilterJobList" parameterType="map">
+	    INSERT INTO NBS_VIEW_FILTER_DTL
+	           (VF_ID, JOB_ID)
+	    VALUES (#{id}, #{jobId})
+	</insert>
+	
+	<update id="updateViewFilter" parameterType="nexcore.scheduler.entity.ViewFilter">
+	    UPDATE NBS_VIEW_FILTER
+	       SET VF_NAME = #{name},
+	           VF_TEAM = #{team},
+	           VF_OWNER = #{owner},
+	           VF_DESC = #{description},
+	           JOB_COUNT = (SELECT COUNT(*) FROM NBS_VIEW_FILTER_DTL WHERE VF_ID = #{id}),
+	           LAST_MODIFY_TIME = #{lastModifyTime}
+	     WHERE VF_ID = #{id}
+	</update>
+	
+	<update id="updateViewFilterJobCount" parameterType="map">
+	    UPDATE NBS_VIEW_FILTER
+	       SET JOB_COUNT = (SELECT COUNT(*) FROM NBS_VIEW_FILTER_DTL WHERE VF_ID = #{id}),
+	           LAST_MODIFY_TIME = #{lastModifyTime}
+	     WHERE VF_ID = #{id}
+	</update>
+	
+	<delete id="deleteViewFilter" parameterType="int">
+	    DELETE FROM NBS_VIEW_FILTER WHERE VF_ID = #{id}
+	</delete>
+	
+	<delete id="deleteViewFilterJobList" parameterType="map">
+	    DELETE FROM NBS_VIEW_FILTER_DTL WHERE VF_ID = #{id}
+	    <if test="jobId != null">
+	        AND JOB_ID = #{jobId}
+	    </if>
+	</delete>
+			
+	<!-- ■■■■■■■■■■■ Job Definition ■■■■■■■■■■■■■ -->
+
+	<resultMap id="JobDefinition-ResultMap" type="nexcore.scheduler.entity.JobDefinition">
+	    <id property="jobId" column="JOB_ID"/>
+	    <result property="jobGroupId" column="JOB_GROUP_ID"/>
+	    <result property="owner" column="OWNER"/>
+	    <result property="description" column="JOB_DESC"/>
+	    <result property="timeFrom" column="TIME_FROM"/>
+	    <result property="timeUntil" column="TIME_UNTIL"/>
+	    <result property="repeatYN" column="REPEAT_YN"/>
+	    <result property="repeatIntval" column="REPEAT_INTVAL"/>
+	    <result property="repeatIntvalGb" column="REPEAT_INTVAL_GB"/>
+	    <result property="repeatIfError" column="REPEAT_IF_ERROR"/>
+	    <result property="repeatMaxOk" column="REPEAT_MAX_OK"/>
+	    <result property="repeatExactExp" column="REPEAT_EXACT_EXP"/>
+	    <result property="confirmNeedYN" column="CONFIRM_NEED_YN"/>
+	    <result property="parallelGroup" column="PARALLEL_GROUP"/>
+	    <result property="jobType" column="JOB_TYPE"/>
+	    <result property="agentNode" column="AGENT_NODE"/>
+	    <result property="componentName" column="COMPONENT_NAME"/>
+	    <result property="scheduleType" column="SCHEDULE_TYPE"/>
+	    <result property="daysInMonth" column="DAYS_IN_MONTH"/>
+	    <result property="months" column="MONTHS"/>
+	    <result property="daysOfWeek" column="DAYS_OF_WEEK"/>
+	    <result property="weekdayMonthdayType" column="WEEKDAY_MONTHDAY_TYPE"/>
+	    <result property="calendarId" column="CALENDAR_ID"/>
+	    <result property="calendarExps" column="CALENDAR_EXP"/>
+	    <result property="dayOfMonthScheduleType" column="DAY_SCHEDULE_TYPE"/>
+	    <result property="beforeAfterExp" column="BEFORE_AFTER_EXP"/>
+	    <result property="shiftExp" column="SHIFT_EXP"/>
+	    <result property="shiftExp2" column="SHIFT_EXP2"/>
+	    <result property="fixedDays" column="FIXED_DAYS"/>
+	    <result property="extraSchedule" column="EXTRA_SCHEDULE"/>
+	    <result property="baseDateCalId" column="BASE_DATE_CAL_ID"/>
+	    <result property="baseDateLogic" column="BASE_DATE_LOGIC"/>
+	    <result property="logLevel" column="LOG_LEVEL"/>
+	    <result property="createTime" column="CREATE_TIME"/>
+	    <result property="lastModifyTime" column="LAST_MODIFY_TIME"/>
+	</resultMap>
+	<select id="selectJobGroupAttrDefByQuery" parameterType="map" resultMap="JobGroupAttrDef-ResultMap">
+	    SELECT *
+	    FROM NBS_JOBGROUP_ATTR_DEF
+	    <where>
+	        <if test="queryCondition != null and queryCondition != ''">
+	            ${queryCondition}
+	        </if>
+	    </where>
+	    <if test="orderBy != null and orderBy != ''">
+	        ${orderBy}
+	    </if>
+	</select>
     
+    
+      <!-- ■■■■■■■■■■■■■ JobGroupAttrDef ■■■■■■■■■■■■■=== -->
+	<resultMap id="JobGroupAttrDef-ResultMap" type="nexcore.scheduler.entity.JobGroupAttrDef">
+	    <result property="id" column="ATTR_ID" />
+	    <result property="name" column="ATTR_NAME" />
+	    <result property="desc" column="ATTR_DESC" />
+	    <result property="valueType" column="VALUE_TYPE" />
+	    <result property="valueCheck" column="VALUE_CHECK" />
+	    <result property="displayLine" column="DISPLAY_LINE" />
+	    <result property="displayMonitorYN" column="DISPLAY_MONITOR" />
+	    <result property="displayOrder" column="DISPLAY_ORDER" />
+	    <result property="lastModifyTime" column="LAST_MODIFY_TIME" />
+	</resultMap>
+	
+	<select id="selectJobGroupByDynamicQuery" parameterType="map" resultMap="JobGroup-ResultMap">
+	    SELECT a.*, b.GROUP_ID AS OWNER_GROUP_ID, b.ATTR_ID, b.ATTR_VALUE 
+	    FROM NBS_JOBGROUP a 
+	    LEFT JOIN NBS_JOBGROUP_ATTR b ON a.GROUP_ID = b.GROUP_ID
+	    <where>
+	        <if test="groupIdLike != null and groupIdLike != ''">
+	            AND a.GROUP_ID LIKE #{groupIdLike}
+	        </if>
+	        <if test="groupNameLike != null and groupNameLike != ''">
+	            AND a.GROUP_NAME LIKE #{groupNameLike}
+	        </if>
+	        <if test="groupDescLike != null and groupDescLike != ''">
+	            AND a.GROUP_DESC LIKE #{groupDescLike}
+	        </if>
+	        <if test="authorizedJobGroupIdViewList != null and authorizedJobGroupIdViewList.size() > 0">
+	            AND a.GROUP_ID IN 
+	            <foreach item="item" collection="authorizedJobGroupIdViewList" open="(" separator="," close=")">
+	                #{item}
+	            </foreach>
+	        </if>
+	    </where>
+	    ${orderBy}
+	</select>
+		
+	<resultMap id="JobGroup-ResultMap" type="nexcore.scheduler.entity.JobGroup">
+	    <id property="id" column="GROUP_ID"/>
+	    <result property="name" column="GROUP_NAME"/>
+	    <result property="desc" column="GROUP_DESC"/>
+	    <result property="parentId" column="PARENT_ID"/>
+	    <result property="creatorId" column="CREATOR_ID"/>
+	    <result property="ownerId" column="OWNER_ID"/>
+	    <result property="createTime" column="CREATE_TIME"/>
+	    <result property="lastModifyTime" column="LAST_MODIFY_TIME"/>
+	    <collection property="attributeList" resultMap="nbs.monitor.JobGroupAttr-ResultMap"/>
+	</resultMap>
+	
+	<select id="selectAgentInfoCountByQuery" parameterType="map" resultType="int">
+	    SELECT COUNT(*) AS CNT
+	    FROM NBS_AGENT
+        <if test="queryCondition != null and queryCondition != ''">
+            ${queryCondition}
+        </if>
+	</select>
+	<insert id="insertAgentInfo" parameterType="nexcore.scheduler.entity.AgentInfo">
+	    INSERT INTO NBS_AGENT (
+	        AGENT_ID, AGENT_NAME, AGENT_DESC, AGENT_IP, AGENT_PORT, 
+	        RUN_MODE, IN_USE, BASE_DIRECTORY, OS_USERID, OS_PASSWD, 
+	        START_CMD, REMOTE_START_TYPE, MAX_RUNNING_JOB, LAST_MODIFY_TIME
+	    ) VALUES (
+	        #{id}, #{name, jdbcType=VARCHAR}, #{desc, jdbcType=VARCHAR}, 
+	        #{ip, jdbcType=VARCHAR}, #{port}, #{runMode, jdbcType=VARCHAR}, 
+	        #{inUseYN, jdbcType=VARCHAR}, #{baseDirectory, jdbcType=VARCHAR}, 
+	        #{osUserId, jdbcType=VARCHAR}, #{osPasswd, jdbcType=VARCHAR}, 
+	        #{startCmd, jdbcType=VARCHAR}, #{remoteStartType, jdbcType=VARCHAR}, 
+	        #{maxRunningJob}, #{lastModifyTime}
+	    )
+	</insert>
+	<delete id="deleteAgentInfo" parameterType="string">
+	    DELETE FROM NBS_AGENT WHERE AGENT_ID = #{id}
+	</delete>
+
 </mapper>
