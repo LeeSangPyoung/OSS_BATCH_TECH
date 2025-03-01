@@ -39,6 +39,7 @@ import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -189,12 +190,18 @@ public class RestAPIJobRunner extends AbsJobRunner {
 				// Util.logDebug(logger, "GET(" + httpGet.getURI() + ") start.");
 				Util.logDebug(logger, "GET(" + httpGet.getUri().toString() + ") start.");
 
-				HttpResponse response = httpClient.execute(httpGet);
-				int    statusCode   = response.getStatusLine().getStatusCode();
+				//HttpResponse response = httpClient.execute(httpGet);
+				//int    statusCode   = response.getStatusLine().getStatusCode();
+				ClassicHttpResponse response = (ClassicHttpResponse) httpClient.execute(httpGet);
+				int statusCode = response.getCode();  // ✅ 정상 작동
+
+				
+				
 				String responseData = readResponseData(response);
 				
-				Util.logDebug(logger, "GET(" + httpGet.getURI() + ") end. " + statusCode + " - " + responseData);
-		
+				//Util.logDebug(logger, "GET(" + httpGet.getURI() + ") end. " + statusCode + " - " + responseData);
+				Util.logDebug(logger, "GET(" + httpGet.getUri().toString() + ") end. " + statusCode + " - " + responseData);
+
 				if(HttpStatus.SC_OK != statusCode){
 					throw new Exception(responseData);
 				}
@@ -292,14 +299,18 @@ public class RestAPIJobRunner extends AbsJobRunner {
 			httpClient = createHttpClient(); 
 			httpPost   = createHttpPost(uri, requestJson);
 			
-			Util.logInfo(logger, "POST(" + httpPost.getURI() + ") start. " + requestJson);
+			// Util.logInfo(logger, "POST(" + httpPost.getURI() + ") start. " + requestJson);
+			Util.logInfo(logger, "POST(" + httpPost.getUri().toString() + ") start. " + requestJson);
 
-			HttpResponse response = httpClient.execute(httpPost);
-			
-			int    statusCode   = response.getStatusLine().getStatusCode();
+			//HttpResponse response = httpClient.execute(httpPost);
+			ClassicHttpResponse response = (ClassicHttpResponse) httpClient.execute(httpPost);
+
+			//int    statusCode   = response.getStatusLine().getStatusCode();
+			int statusCode = response.getCode();  // ✅ 정상 작동
+
 			String responseData = readResponseData(response);
 			
-			Util.logInfo(logger, "POST(" + httpPost.getURI() + ") end. " + statusCode + " - " + responseData);
+			Util.logInfo(logger, "POST(" + httpPost.getUri().toString() + ") end. " + statusCode + " - " + responseData);
 
 			if(HttpStatus.SC_OK != statusCode){
 				throw new RuntimeException(responseData);
@@ -319,9 +330,12 @@ public class RestAPIJobRunner extends AbsJobRunner {
 			httpClient = createHttpClient(); 
 			httpGet   = createHttpGet(uri);
 			
-			HttpResponse response = httpClient.execute(httpGet);
-			
-			int    statusCode   = response.getStatusLine().getStatusCode();
+			//HttpResponse response = httpClient.execute(httpGet);
+			ClassicHttpResponse response = (ClassicHttpResponse) httpClient.execute(httpGet);
+
+			//int    statusCode   = response.getStatusLine().getStatusCode();
+			int statusCode = response.getCode();  // ✅ 정상 작동
+
 			String responseData = readResponseData(response);
 	
 			if(HttpStatus.SC_OK != statusCode){
@@ -341,9 +355,11 @@ public class RestAPIJobRunner extends AbsJobRunner {
 			httpClient = createHttpClient(); 
 			httpPut    = createHttpPut(uri);
 			
-			HttpResponse response = httpClient.execute(httpPut);
-			
-			int    statusCode   = response.getStatusLine().getStatusCode();
+			//HttpResponse response = httpClient.execute(httpPut);
+			ClassicHttpResponse response = (ClassicHttpResponse) httpClient.execute(httpPut);
+
+			//int    statusCode   = response.getStatusLine().getStatusCode();
+			int statusCode = response.getCode();  // ✅ 정상 작동
 			String responseData = readResponseData(response);
 	
 			if(HttpStatus.SC_OK != statusCode){
@@ -376,7 +392,8 @@ public class RestAPIJobRunner extends AbsJobRunner {
     }
     
     protected CloseableHttpClient createHttpClient() {
-		return HttpClientBuilder.create().build(); //HttpClients.createDefault();
+		//return HttpClientBuilder.create().build(); //HttpClients.createDefault();
+		return HttpClients.custom().build();  // ✅ HttpClients.custom() 사용
     }
     
     protected void close(Reader reader) {
@@ -388,12 +405,17 @@ public class RestAPIJobRunner extends AbsJobRunner {
 		}
     }
 	
+	/*
+	 * protected void close(HttpPost post) { if(post != null) {
+	 * post.releaseConnection(); } }
+	 */
     protected void close(HttpPost post) {
-    	if(post != null) {
-    		post.releaseConnection();
-		}
+        if (post != null) {
+            post.setEntity(null);  // ✅ 명시적으로 요청 본문 해제 (필요한 경우)
+            post = null;           // ✅ 객체 참조 해제
+        }
     }
-    
+
     protected void close(CloseableHttpClient client) {
 		if(client != null) {
 			try {
@@ -403,21 +425,37 @@ public class RestAPIJobRunner extends AbsJobRunner {
 		}
     }
 
-    protected String readResponseData(HttpResponse response) throws Exception {
-    	BufferedReader reader = null; 
-    	try {
-    		reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-			StringBuilder responseDataBuff = new StringBuilder();
-			String line = null;
-			while ((line = reader.readLine()) != null) {
-				responseDataBuff.append(line);
-			}
-			return responseDataBuff.toString();
-    	}
-    	finally {
-    		close(reader);
-    	}
+//    protected String readResponseData(HttpResponse response) throws Exception {
+//    	BufferedReader reader = null; 
+//    	try {
+//    		reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+//			StringBuilder responseDataBuff = new StringBuilder();
+//			String line = null;
+//			while ((line = reader.readLine()) != null) {
+//				responseDataBuff.append(line);
+//			}
+//			return responseDataBuff.toString();
+//    	}
+//    	finally {
+//    		close(reader);
+//    	}
+//    }
+
+    protected String readResponseData(ClassicHttpResponse response) throws Exception {
+        BufferedReader reader = null; 
+        try {
+            reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent())); // ✅ 수정됨
+            StringBuilder responseDataBuff = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                responseDataBuff.append(line);
+            }
+            return responseDataBuff.toString();
+        } finally {
+            close(reader);
+        }
     }
+
     
 	protected ObjectNode createJsonObject(Map<String, String> map){
 		ObjectNode node = new ObjectNode(JsonNodeFactory.instance);

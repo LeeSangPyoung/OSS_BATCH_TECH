@@ -29,8 +29,12 @@ import org.apache.commons.logging.Log;
  */
 
 public class WindowsProcessHelperImpl extends AbsProcessHelper {
-	private String psAllCommand       = "wmic process where name='cmd.exe' get commandline, processid";   // 전체 프로세스를 보는 command
-	private String getChildPidCommand = "wmic process where (ParentProcessId=%s) get processid";          // %s 프로세스의 child 프로세스 PID를 찾음.
+//	private String psAllCommand       = "wmic process where name='cmd.exe' get commandline, processid";   // 전체 프로세스를 보는 command
+//	private String getChildPidCommand = "wmic process where (ParentProcessId=%s) get processid";          // %s 프로세스의 child 프로세스 PID를 찾음.
+//	
+	private String psAllCommand       = "tasklist /FI \"IMAGENAME eq cmd.exe\" /FO CSV";  
+	private String getChildPidCommand = "wmic process where (ParentProcessId=%s) get processid";  // ✅ 아래 코드에서 대체 필요
+
 	private String killCommand        = "taskkill /F /T /PID";   // 프로세스 kill. /T : subtree 모두 kill
 	private String pidIndex           = "L";                     // ps 의 결과 중에 PID 를 포함하는 위치 컬럼 위치. 기본값은 L (Last)
 

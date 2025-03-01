@@ -1,89 +1,94 @@
 package nexcore.scheduler.agent.internal;
 
 import java.net.ServerSocket;
-import java.rmi.RemoteException;
 
 import nexcore.scheduler.exception.AgentException;
 import nexcore.scheduler.util.Util;
 
-import org.springframework.remoting.rmi.RmiServiceExporter;
+import org.springframework.web.bind.annotation.*;
+import nexcore.scheduler.entity.IAgentService;
+@RestController
+@RequestMapping("/agent/rmi")
+public class AgentRmiServiceExporter {
 
-/**
- * <ul>
- * <li>업무 그룹명 : 금융 프레임워크 </li>
- * <li>서브 업무명 : 배치 코어 </li>
- * <li>설  명 : online was 에서는 Agent RMI 를 export 하지 않기 위해 기본, RmiServiceExporter를 wrap 한다. </li>
- * <li>작성일 : 2010. 10. 22.</li>
- * <li>작성자 : 정호철</li>
- * </ul>
- */
-public class AgentRmiServiceExporter extends RmiServiceExporter {
-	private int     rmiPort; 
-	private boolean enable  = true;
-	private boolean checkPortDup = false; // port 사용 여부를 먼저 체크할지 말지? WAS의 RMI registry 를 공유해서 사용하는 경우는 dup 체크를 하면안됨. 
-	
-	public void init() {
-	}
+    private int rmiPort;
+    private boolean enable = true;
+    private boolean checkPortDup = false;
+    private String serviceName;
+    private IAgentService service;
 
-	public void destroy() {
-		if (enable) {
-			try {
-				super.destroy();
-			} catch (RemoteException e) {
-				throw Util.toRuntimeException(e);
-			}
-		}
-	}
-	
-	public boolean isEnable() {
-		return enable;
-	}
+    public void setService(IAgentService service) {
+        this.service = service;
+    }
 
-	public void setEnable(boolean enable) {
-		this.enable = enable;
-	}
-	
-	public boolean isCheckPortDup() {
-		return checkPortDup;
-	}
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
 
-	public void setCheckPortDup(boolean checkPortDup) {
-		this.checkPortDup = checkPortDup;
-	}
+    @PostMapping("/init")
+    public void init() {
+        Util.logServerInitConsole("RMI", "Agent RMI Service Initialized");
+    }
 
-	public void setRegistryPort(int registryPort) {
-		this.rmiPort = registryPort;
-		super.setRegistryPort(registryPort);
-	}
-	
-	public void afterPropertiesSet() throws RemoteException {
-		if (enable) {
-			try {
-				if (checkPortDup) {
-					ServerSocket ss = null;
-					try {
-						ss = new ServerSocket(this.rmiPort);
-					}catch(Exception e) {
-						throw new AgentException("agent.server.port.error", e); 
-					}finally {
-						try {
-							ss.close(); 
-						}catch(Exception ee) {}
-					}
-				}
-		        Util.logServerInitConsole("RMI", "(Registry Port:"+rmiPort+")");
-				try {
-				    // RMI 포트 번호를 환경 변수에 설정
-				    System.setProperty("NC_BATAGENT_RMI_PORT", String.valueOf(rmiPort));
-				} catch (Exception e) {
-				    System.out.println("System.setProperty(\"NC_BATAGENT_RMI_PORT\", \""+rmiPort+"\") fail.");
-				}
-				super.afterPropertiesSet();
-			}catch(Exception e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-		}
-	}
-	
+    @DeleteMapping("/destroy")
+    public void destroy() {
+        if (enable) {
+            Util.logServerInitConsole("RMI", "Agent RMI Service Destroyed");
+        }
+    }
+
+    @GetMapping("/status")
+    public String status() {
+        return enable ? "RMI Service Enabled" : "RMI Service Disabled";
+    }
+
+    @PostMapping("/enable/{flag}")
+    public void setEnable(@PathVariable boolean flag) {
+        this.enable = flag;
+        Util.logServerInitConsole("RMI", "Service enable set to: " + flag);
+    }
+
+    @GetMapping("/check-port-dup")
+    public boolean isCheckPortDup() {
+        return checkPortDup;
+    }
+
+    @PostMapping("/check-port-dup/{flag}")
+    public void setCheckPortDup(@PathVariable boolean flag) {
+        this.checkPortDup = flag;
+        Util.logServerInitConsole("RMI", "Check Port Duplication set to: " + flag);
+    }
+
+    @PostMapping("/set-registry-port/{port}")
+    public void setRegistryPort(@PathVariable int port) {
+        this.rmiPort = port;
+        Util.logServerInitConsole("RMI", "Registry Port Set: " + port);
+    }
+
+    @PostMapping("/start")
+    public void afterPropertiesSet() {
+        if (enable) {
+            try {
+                if (checkPortDup) {
+                    try (ServerSocket ss = new ServerSocket(this.rmiPort)) {
+                        // 포트 사용 가능
+                    } catch (Exception e) {
+                        throw new AgentException("agent.server.port.error", e);
+                    }
+                }
+                Util.logServerInitConsole("RMI", "(Registry Port: " + rmiPort + ")");
+
+                // 환경 변수 설정
+                try {
+                    System.setProperty("NC_BATAGENT_RMI_PORT", String.valueOf(rmiPort));
+                } catch (Exception e) {
+                    System.out.println("System.setProperty(\"NC_BATAGENT_RMI_PORT\", \"" + rmiPort + "\") fail.");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(1);
+            }
+        }
+    }
 }

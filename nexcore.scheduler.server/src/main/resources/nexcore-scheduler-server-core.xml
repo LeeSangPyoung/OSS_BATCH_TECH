@@ -69,13 +69,13 @@
         <property name="transactionConfigClass" value="com.ibatis.sqlmap.engine.transaction.jdbc.JdbcTransactionConfig"/>
     </bean> -->
 
-<!--     <bean id="nbs.controller.ControllerServiceRMIExporter" class="org.springframework.remoting.rmi.RmiServiceExporter">
+     <bean id="nbs.controller.ControllerServiceRMIExporter" class="org.springframework.remoting.rmi.RmiServiceExporter">
         <property name = "serviceName"       value = "BatchController"/>
         <property name = "service"           ref   = "nbs.controller.ControllerService"/>
         <property name = "serviceInterface"  value = "nexcore.scheduler.entity.IControllerService"/>
         <property name = "registryPort"      value = "${scheduler.rmi.server.port.${NEXCORE_ID}}"/>
         <property name = "servicePort"       value = "${scheduler.rmi.server.port.${NEXCORE_ID}}"/>
-    </bean> -->
+    </bean>
     
 	<bean id="nbs.controller.ControllerService"
         class="nexcore.scheduler.controller.internal.ControllerServiceImpl"

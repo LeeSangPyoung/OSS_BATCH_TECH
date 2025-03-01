@@ -15,7 +15,13 @@ import nexcore.scheduler.exception.AgentException;
 import nexcore.scheduler.log.LogManager;
 import nexcore.scheduler.util.NRMIClientSocketFactory;
 import nexcore.scheduler.util.Util;
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.rmi.Naming;
+import java.rmi.Remote;
+
 /**
  *  
  * <ul>
@@ -73,44 +79,109 @@ public class ControllerClientByRmi implements IControllerClient {
 		}
 	}
 
+//	private void connect() {
+//		int i = 0;
+//		for (String address : schedulerAddressList) {
+//			i++;
+//			if (Util.isBlank(address)) {
+//				Util.logInfo(log, "[ControllerClient] No scheduler");
+//				return;
+//			}
+//			Util.logInfo(log, "[ControllerClient] scheduler connection : "+address);
+//			String schedulerIp   = address.substring(0, address.indexOf(":"));
+//			int    schedulerPort = Integer.parseInt(address.substring(address.indexOf(":")+1));
+//			
+//			Util.logInfo(log, "[ControllerClient] ("+i+") Creating RMI Proxy to scheduler ["+schedulerIp+":"+schedulerPort+"].");
+//			System.out.println("Controller ("+i+") : ["+schedulerIp+":"+schedulerPort+"]");
+//			
+//			// RMI Proxy 생성
+//			/*
+//			 * RmiProxyFactoryBean rmiProxyFactory = new RmiProxyFactoryBean();
+//			 * rmiProxyFactory.setServiceUrl("rmi://"+schedulerIp+":"+schedulerPort+
+//			 * "/BatchController");
+//			 * rmiProxyFactory.setServiceInterface(IControllerService.class);
+//			 * rmiProxyFactory.setRefreshStubOnConnectFailure(true);
+//			 * rmiProxyFactory.setLookupStubOnStartup(false);
+//			 * rmiProxyFactory.setRegistryClientSocketFactory(new
+//			 * NRMIClientSocketFactory(5000, 30000)); rmiProxyFactory.afterPropertiesSet();
+//			 * 
+//			 * // Set Service Object IControllerService controllerService =
+//			 * (IControllerService)rmiProxyFactory.getObject();
+//			 */
+//			
+//			
+//			
+//			IControllerService controllerService = null;
+//			try {
+//				// Remote remoteService = Naming.lookup("rmi://" + schedulerIp + ":" + schedulerPort + "/BatchController");
+//
+//				
+//				Remote remoteService = Naming.lookup("rmi://" + schedulerIp + ":" + schedulerPort + "/BatchController");
+//
+//				return (IControllerService) Proxy.newProxyInstance(
+//				    IControllerService.class.getClassLoader(),
+//				    new Class<?>[]{IControllerService.class},
+//				    new InvocationHandler() {
+//				        @Override
+//				        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+//				            return method.invoke(remoteService, args);
+//				        }
+//				    }
+//				);
+//
+//				
+//			    controllerService = (IControllerService) Naming.lookup("rmi://" + schedulerIp + ":" + schedulerPort + "/BatchController");
+//			} catch (Exception e) {
+//			    Util.logError(log, "[ControllerClient] Fail to connect to scheduler RMI: " + schedulerIp + ":" + schedulerPort, e);
+//			}
+//			controllerServiceAliveList.add(controllerService);
+//		}
+//	}
 	private void connect() {
-		int i = 0;
-		for (String address : schedulerAddressList) {
-			i++;
-			if (Util.isBlank(address)) {
-				Util.logInfo(log, "[ControllerClient] No scheduler");
-				return;
-			}
-			Util.logInfo(log, "[ControllerClient] scheduler connection : "+address);
-			String schedulerIp   = address.substring(0, address.indexOf(":"));
-			int    schedulerPort = Integer.parseInt(address.substring(address.indexOf(":")+1));
-			
-			Util.logInfo(log, "[ControllerClient] ("+i+") Creating RMI Proxy to scheduler ["+schedulerIp+":"+schedulerPort+"].");
-			System.out.println("Controller ("+i+") : ["+schedulerIp+":"+schedulerPort+"]");
-			
-			// RMI Proxy 생성
-			/*
-			 * RmiProxyFactoryBean rmiProxyFactory = new RmiProxyFactoryBean();
-			 * rmiProxyFactory.setServiceUrl("rmi://"+schedulerIp+":"+schedulerPort+
-			 * "/BatchController");
-			 * rmiProxyFactory.setServiceInterface(IControllerService.class);
-			 * rmiProxyFactory.setRefreshStubOnConnectFailure(true);
-			 * rmiProxyFactory.setLookupStubOnStartup(false);
-			 * rmiProxyFactory.setRegistryClientSocketFactory(new
-			 * NRMIClientSocketFactory(5000, 30000)); rmiProxyFactory.afterPropertiesSet();
-			 * 
-			 * // Set Service Object IControllerService controllerService =
-			 * (IControllerService)rmiProxyFactory.getObject();
-			 */
-			IControllerService controllerService = null;
-			try {
-			    controllerService = (IControllerService) Naming.lookup("rmi://" + schedulerIp + ":" + schedulerPort + "/BatchController");
-			} catch (Exception e) {
-			    Util.logError(log, "[ControllerClient] Fail to connect to scheduler RMI: " + schedulerIp + ":" + schedulerPort, e);
-			}
-			controllerServiceAliveList.add(controllerService);
-		}
-	}
+        int i = 0;
+        for (String address : schedulerAddressList) {
+            i++;
+            if (Util.isBlank(address)) {
+                Util.logInfo(log, "[ControllerClient] No scheduler");
+                return;
+            }
+            Util.logInfo(log, "[ControllerClient] scheduler connection : " + address);
+            String schedulerIp = address.substring(0, address.indexOf(":"));
+            int schedulerPort = Integer.parseInt(address.substring(address.indexOf(":") + 1));
+
+            Util.logInfo(log, "[ControllerClient] (" + i + ") Creating RMI Proxy to scheduler [" + schedulerIp + ":" + schedulerPort + "].");
+            System.out.println("Controller (" + i + ") : [" + schedulerIp + ":" + schedulerPort + "]");
+
+            try {
+                // 원격 RMI 객체 검색
+                Remote remoteService = Naming.lookup("rmi://" + schedulerIp + ":" + schedulerPort + "/BatchController");
+
+                // 프록시를 생성하여 IControllerService로 변환
+                IControllerService controllerService = (IControllerService) Proxy.newProxyInstance(
+                    IControllerService.class.getClassLoader(),
+                    new Class<?>[]{IControllerService.class},
+                    new InvocationHandler() {
+                        @Override
+                        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                            Object result = method.invoke(remoteService, args);
+
+                            // void 리턴 타입일 경우 null 반환 방지
+                            if (method.getReturnType().equals(void.class)) {
+                                return null;
+                            }
+                            return result;
+                        }
+                    }
+                );
+
+                // 정상적으로 연결된 서비스 리스트에 추가
+                controllerServiceAliveList.add(controllerService);
+
+            } catch (Exception e) {
+                Util.logError(log, "[ControllerClient] Fail to connect to scheduler RMI: " + schedulerIp + ":" + schedulerPort, e);
+            }
+        }
+    }
 	
 	/**
 	 * round-robin 하며 IControllerService 를 번갈아서 리턴함.

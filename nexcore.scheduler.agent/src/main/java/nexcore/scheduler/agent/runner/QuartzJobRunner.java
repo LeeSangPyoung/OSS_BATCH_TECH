@@ -6,8 +6,10 @@ import org.quartz.JobExecutionException;
 import org.quartz.JobListener;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.quartz.SimpleTrigger;
-
+import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
+import org.quartz.SimpleScheduleBuilder;
+import org.quartz.JobKey;
 import nexcore.scheduler.agent.IJobRunnerCallBack;
 import nexcore.scheduler.agent.JobContext;
 import nexcore.scheduler.agent.joblog.ILogger;
@@ -35,51 +37,54 @@ public class QuartzJobRunner extends AbsJobRunner {
 	public QuartzJobRunner() {
 	}
 	
+
 	public void init() {
-		log = LogManager.getAgentLog();
-        try {
-            scheduler.addGlobalJobListener(new JobListener() {
-                public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
-                    if ("NEXCORE".equals(context.getTrigger().getGroup())) {
-                        // NEXCORE 가 fire 한 Job임.
-                        String jobExeId = context.getTrigger().getName();
-                        JobContext   jobContext = agentMain.getJobExecutionBoard().getJobContext(jobExeId);
-                        JobExecution jobexe     = jobContext.getJobExecution();
-                        
-                        if (jobException == null) {
-                            log.info("Quartz "+context+" executed without errors.");
-                            jobContext.getLogger().info("Quartz "+context+" executed without errors.");
-                        }else {
-                            log.error("Quartz "+context+" failed.", jobException);
-                            jobContext.getLogger().error("Quartz "+context+" failed", jobException);
-                        }
-                        end(jobexe, jobContext, jobException == null ? 0 : 80, jobException == null ? null : jobException.getMessage());
-                    }
-                }
-                
-                public void jobToBeExecuted(JobExecutionContext context) {
-                }
-                
-                public void jobExecutionVetoed(JobExecutionContext context) {
-                    if ("NEXCORE".equals(context.getTrigger().getGroup())) {
-                        String jobExeId = context.getTrigger().getName();
-                        JobContext   jobContext = agentMain.getJobExecutionBoard().getJobContext(jobExeId);
-                        JobExecution jobexe     = jobContext.getJobExecution();
-                        log.info("Quartz "+context+" executed without errors.");
-                        jobContext.getLogger().info("Quartz "+context+" executed without errors.");
+	    log = LogManager.getAgentLog();
+	    try {
+	        scheduler.getListenerManager().addJobListener(new JobListener() {
+	            @Override
+	            public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
+	                if ("NEXCORE".equals(context.getTrigger().getKey().getGroup())) {
+	                    // NEXCORE 가 fire 한 Job임.
+	                    String jobExeId = context.getTrigger().getKey().getName();
+	                    JobContext jobContext = agentMain.getJobExecutionBoard().getJobContext(jobExeId);
+	                    JobExecution jobexe = jobContext.getJobExecution();
 
-                        end(jobexe, jobContext, 81, "vetoed");
-                    }
-                }
-                
-                public String getName() {
-                    return "NexcoreQuartzJobListener";
-                }
-            });
-        } catch (SchedulerException e) {
-            throw new AgentException("com.error.occurred.while", e, "Quartz JobListener creation");
-        }            
+	                    if (jobException == null) {
+	                        log.info("Quartz " + context + " executed without errors.");
+	                        jobContext.getLogger().info("Quartz " + context + " executed without errors.");
+	                    } else {
+	                        log.error("Quartz " + context + " failed.", jobException);
+	                        jobContext.getLogger().error("Quartz " + context + " failed", jobException);
+	                    }
+	                    end(jobexe, jobContext, jobException == null ? 0 : 80, jobException == null ? null : jobException.getMessage());
+	                }
+	            }
 
+	            @Override
+	            public void jobToBeExecuted(JobExecutionContext context) {}
+
+	            @Override
+	            public void jobExecutionVetoed(JobExecutionContext context) {
+	                if ("NEXCORE".equals(context.getTrigger().getKey().getGroup())) {
+	                    String jobExeId = context.getTrigger().getKey().getName();
+	                    JobContext jobContext = agentMain.getJobExecutionBoard().getJobContext(jobExeId);
+	                    JobExecution jobexe = jobContext.getJobExecution();
+	                    log.info("Quartz " + context + " execution vetoed.");
+	                    jobContext.getLogger().info("Quartz " + context + " execution vetoed.");
+
+	                    end(jobexe, jobContext, 81, "vetoed");
+	                }
+	            }
+
+	            @Override
+	            public String getName() {
+	                return "NexcoreQuartzJobListener";
+	            }
+	        });
+	    } catch (SchedulerException e) {
+	        throw new AgentException("com.error.occurred.while", e, "Quartz JobListener creation");
+	    }
 	}
 	
 	public void destroy() {
@@ -99,26 +104,31 @@ public class QuartzJobRunner extends AbsJobRunner {
         try {
             // 선처리 실행
             doJobExePreProcessors(context);
-
             logJobStart(context);
 
             String inJobGroup = context.getInParameter("JOB_GROUP");
             String inJobName  = context.getInParameter("JOB_NAME");
-            log.info("QuartzJob JOB_GROUP="+inJobGroup);
-            log.info("QuartzJob JOB_NAME ="+inJobName);
-            
-            SimpleTrigger trigger = new SimpleTrigger(je.getJobExecutionId(), "NEXCORE");
-            trigger.setName(je.getJobExecutionId()); // End 이벤트 발생시 구분하기 위해 JobExecutionId로 트리거 생성
-            trigger.setJobName(inJobName);
-            trigger.setJobGroup(inJobGroup);
-            log.info("Quartz Job : "+inJobGroup+"."+inJobName+" will be triggered.");
+            log.info("QuartzJob JOB_GROUP=" + inJobGroup);
+            log.info("QuartzJob JOB_NAME=" + inJobName);
+
+            // ✅ Quartz 2.x 이상에서는 TriggerBuilder 사용
+            Trigger trigger = TriggerBuilder.newTrigger()
+                    .withIdentity(je.getJobExecutionId(), "NEXCORE")
+                    .forJob(JobKey.jobKey(inJobName, inJobGroup))  // Job 지정
+                    .withSchedule(SimpleScheduleBuilder.simpleSchedule())  // 간단한 스케줄 설정
+                    .startNow()
+                    .build();
+
+            log.info("Quartz Job : " + inJobGroup + "." + inJobName + " will be triggered.");
             scheduler.scheduleJob(trigger);
-        }catch (Throwable e) {
+
+        } catch (Throwable e) {
             String msg = MSG.get("agent.fail.start.job", je.getJobExecutionId());
             Util.logError(log, msg, e);
-            end(je, context, 3, msg+"/"+e.toString());
+            end(je, context, 3, msg + "/" + e.toString());
         }
-	}	
+    }
+
     
     /**
      * Job 종료 처리. 

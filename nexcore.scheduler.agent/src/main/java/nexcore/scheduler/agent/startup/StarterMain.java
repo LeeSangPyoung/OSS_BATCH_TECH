@@ -27,6 +27,9 @@ import nexcore.scheduler.util.Util;
 public class StarterMain {
 
 	public static void main(String[] args) {
+		
+
+		
 	    Util.logInfoConsole("===========================================");
 	    Util.logInfoConsole(MSG.get("agent.starting.message", System.getProperty("NEXCORE_ID")));
 
@@ -41,7 +44,7 @@ public class StarterMain {
 			});
 			
 			List<String> filenames = new ArrayList();
-			filenames.add("beans/nexcore-scheduler-agent.xml.boot"); // 이 파일은 확장자가 xml 이 아니므로 수동으로 넣어주어야한다.
+			filenames.add("beans/boot-nexcore-scheduler-agent.xml"); // 이 파일은 확장자가 xml 이 아니므로 수동으로 넣어주어야한다.
 			for (File file : xmlFiles) {
 				String filename = file.getName();
 				int idx = filename.indexOf("@");

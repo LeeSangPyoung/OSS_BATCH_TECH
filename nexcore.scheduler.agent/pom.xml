@@ -11,7 +11,7 @@
     </parent>
 
     <groupId>nexcore.scheduler</groupId>
-    <artifactId>nexcore-scheduler-server</artifactId>
+    <artifactId>nexcore-scheduler-agent</artifactId>
     <version>1.0.0</version>
 
     <properties>
@@ -113,7 +113,7 @@
 		    <artifactId>nexcore-license</artifactId>
 		    <version>2.0</version>
 		    <scope>system</scope>
-		    <systemPath>D:/workspace_0220/nexcore.scheduler.common/lib/nexcore-framework-license-2.0.jar</systemPath>
+		    <systemPath>D:/temp_workspace_batch/nexcore.scheduler.common/lib/nexcore-framework-license-2.0.jar</systemPath>
 		</dependency> 
  
 		<dependency>
@@ -175,6 +175,22 @@
 		    <version>1.0.0</version>
 		</dependency> 
 		
+
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>org.springframework</groupId>
+		    <artifactId>spring-context-support</artifactId>
+		    <version>6.2.2</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.springframework</groupId>
+		    <artifactId>spring-remoting</artifactId>
+		    <version>2.0.8</version>
+		</dependency>
+
 		    <!-- Spring ORM (JPA & MyBatis 지원) -->
 	   <!-- <dependency>
 	        <groupId>org.springframework</groupId>
